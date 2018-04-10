@@ -202,8 +202,15 @@ def run_loop(agents, env, max_frames=0):
         # Print the global observations
         #print(json.dumps(gObs, indent=4, sort_keys=True))
 
-        actions = [agent.step(timestep)
-                   for agent, timestep in zip(agents, timesteps)]
+        # Try to pass the raw obs to the step function
+        try:
+          actions = [agent.step(timestep, obs)
+                     for agent, timestep, obs in zip(agents, timesteps, rObs)]
+        except:
+          # Assume that agent's step function doesn't accept raw obs
+          actions = [agent.step(timestep)
+                     for agent, timestep in zip(agents, timesteps)]
+
         if max_frames and total_frames >= max_frames:
           return
         if timesteps[0].last():
