@@ -15,3 +15,10 @@ default: all
 #----------------------------------------------------------------------
 all:
 	python pysc2/bin/agent.py --map=MoveToBeacon
+
+
+#----------------------------------------------------------------------
+# Test dynamic maps
+#----------------------------------------------------------------------
+dynamics:
+	python pysc2/bin/agent.py --map=TwoMineralShards
