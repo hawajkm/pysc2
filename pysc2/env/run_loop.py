@@ -178,9 +178,10 @@ def parse_observations(obj, depth = 0):
 # By  : Khalid Al-Hawaj
 # Date:  9 April 2018
 
-def run_loop(agents, env, max_frames=0):
+def run_loop(agents, env, max_frames=0, max_episodes=1):
   """A run loop to have agents and an environment interact."""
   total_frames = 0
+  total_episodes = 0
   start_time = time.time()
 
   action_spec = env.action_spec()
@@ -211,11 +212,19 @@ def run_loop(agents, env, max_frames=0):
           actions = [agent.step(timestep)
                      for agent, timestep in zip(agents, timesteps)]
 
-        if max_frames and total_frames >= max_frames:
-          return
         if timesteps[0].last():
-          break
-        timesteps = env.step(actions)
+          total_episodes += 1
+
+        if max_episodes and total_episodes >= max_episodes:
+          return
+        elif max_frames and total_frames >= max_frames:
+          return
+
+        if not timesteps[0].last():
+          timesteps = env.step(actions)
+        else:
+          timesteps = env.reset()
+
   except KeyboardInterrupt:
     pass
   finally:

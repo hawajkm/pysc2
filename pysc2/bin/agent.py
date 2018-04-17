@@ -58,6 +58,8 @@ flags.DEFINE_integer("parallel", 1, "How many instances to run in parallel.")
 flags.DEFINE_bool("save_replay", True, "Whether to save a replay at the end.")
 
 flags.DEFINE_string("map", None, "Name of a map to use.")
+
+flags.DEFINE_integer("max_episode_num", 1, "Maximum number of episodes.")
 flags.mark_flag_as_required("map")
 
 
@@ -74,7 +76,7 @@ def run_thread(agent_cls, map_name, visualize):
       visualize=visualize) as env:
     env = available_actions_printer.AvailableActionsPrinter(env)
     agent = agent_cls()
-    run_loop.run_loop([agent], env, FLAGS.max_agent_steps)
+    run_loop.run_loop([agent], env, FLAGS.max_agent_steps, FLAGS.max_episode_num)
     if FLAGS.save_replay:
       env.save_replay(agent_cls.__name__)
 
