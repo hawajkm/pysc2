@@ -131,12 +131,13 @@ class StarcraftProcess(object):
     num_trails = 0
 
     while num_trails < 10:
+      num = 0
+      msg = ''
+
       try:
         with sw("popen"):
           return subprocess.Popen(args, cwd=run_config.cwd, env=run_config.env)
       except OSError as e:
-        num = 0
-        msg = ''
         err = e
         time.sleep(1)
         try:
@@ -144,6 +145,11 @@ class StarcraftProcess(object):
           msg = e[1]
         except:
           pass
+
+      if (num == 11) and (msg == 'Resource temporarily unavailable'):
+        num_trails += 1
+      else:
+        break
 
     logging.exception("Failed to launch")
     sys.exit("Failed to launch: " + str(args))
