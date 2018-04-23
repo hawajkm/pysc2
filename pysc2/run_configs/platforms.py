@@ -132,3 +132,20 @@ class Linux(LocalBase):
     if platform.system() == "Linux":
       return 1
 
+
+class Cygwin(LocalBase):
+  """Run on Cygwin."""
+
+  os_name = "CYGWIN_NT"
+  os_len  = len(os_name)
+
+  def __init__(self):
+    super(Cygwin, self).__init__(
+        os.environ.get("SC2PATH", "/cygdrive/c/Program Files (x86)/StarCraft II"),
+        "SC2_x64.exe", "Support64")
+
+  @classmethod
+  def priority(cls):
+    if platform.system()[:cls.os_len] == cls.os_name:
+      return 1
+
