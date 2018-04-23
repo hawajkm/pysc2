@@ -91,12 +91,18 @@ class Windows(LocalBase):
   """Run on Windows."""
 
   def __init__(self):
+    # hawajkm: Hacky :)
+    dirName = "/mnt/c/Program Files (x86)/StarCraft II"
+    if not os.path.isdir(dirName):
+      dirName = "C:/Program Files (x86)/StarCraft II"
     super(Windows, self).__init__(
-        os.environ.get("SC2PATH", "C:/Program Files (x86)/StarCraft II"),
+        os.environ.get("SC2PATH", dirName),
         "SC2_x64.exe", "Support64")
 
   @classmethod
   def priority(cls):
+    if os.path.isdir("/mnt/c/Program Files (x86)/StarCraft II"):
+      return 1
     if platform.system() == "Windows":
       return 1
 
@@ -129,8 +135,10 @@ class Linux(LocalBase):
 
   @classmethod
   def priority(cls):
-    if platform.system() == "Linux":
-      return 1
+    # hawajkm: Very hacky, but it works
+    if not os.path.isdir("/mnt/c/Program Files (x86)/StarCraft II"):
+      if platform.system() == "Linux":
+        return 1
 
 
 class Cygwin(LocalBase):
