@@ -127,12 +127,26 @@ class StarcraftProcess(object):
   def _launch(self, run_config, args, **kwargs):
     """Launch the process and return the process object."""
     del kwargs
-    try:
-      with sw("popen"):
-        return subprocess.Popen(args, cwd=run_config.cwd, env=run_config.env)
-    except OSError:
-      logging.exception("Failed to launch")
-      sys.exit("Failed to launch: " + str(args))
+
+    num_trails = 0
+
+    while num_trails < 10:
+      try:
+        with sw("popen"):
+          return subprocess.Popen(args, cwd=run_config.cwd, env=run_config.env)
+      except OSError as e:
+        num = 0
+        msg = ''
+        err = e
+        time.sleep(1)
+        try:
+          num = e[0]
+          msg = e[1]
+        except:
+          pass
+
+    logging.exception("Failed to launch")
+    sys.exit("Failed to launch: " + str(args))
 
   @sw.decorate
   def _connect(self, port):
