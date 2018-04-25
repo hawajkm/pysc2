@@ -201,7 +201,7 @@ def run_loop(agents, env, max_frames=0, max_episodes=1):
         rObs = [parse_observations(mObs) for mObs in env._env._obs]
 
         # Print the global observations
-        #print(json.dumps(gObs, indent=4, sort_keys=True))
+        #print(json.dumps(rObs, indent=2, sort_keys=True))
 
         # Try to pass the raw obs to the step function
         try:
