@@ -20,6 +20,7 @@ from __future__ import print_function
 import types
 import re
 import json
+import inspect
 
 import time
 
@@ -229,13 +230,20 @@ def run_loop(agents, env, max_frames=0, max_episodes=1):
         actions = []
         for agent, timestep, obs, game_info in zip(agents, timesteps, rObs, game_infos):
 
-          if   agent.step.func_code.co_argcount == 2:
+          # Get number of arguments
+          try:
+            # Try for Python 3.x
+            num_args = len(inspect.signature(agent.step).parameters)
+          except:
+            num_args = len(inspect.getargspec(agent.step)) - 1
+
+          if   num_args == 1:
             action = agent.step(timestep)
 
-          elif agent.step.func_code.co_argcount == 3:
+          elif num_args == 2:
             action = agent.step(timestep, obs)
 
-          elif agent.step.func_code.co_argcount == 4:
+          elif num_args == 3:
             action = agent.step(timestep, obs, game_info)
 
           else:
