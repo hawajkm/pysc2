@@ -23,6 +23,8 @@ import json
 
 import time
 
+from pysc2.lib import point
+
 #======================================================================
 # Function Classes
 #======================================================================
@@ -203,23 +205,56 @@ def run_loop(agents, env, max_frames=0, max_episodes=1):
         # Print the global observations
         #print(json.dumps(rObs, indent=2, sort_keys=True))
 
-        # Try to pass the raw obs to the step function
-        try:
-          actions = [agent.step(timestep, obs)
-                     for agent, timestep, obs in zip(agents, timesteps, rObs)]
-        except:
-          # Assume that agent's step function doesn't accept raw obs
-          actions = [agent.step(timestep)
-                     for agent, timestep in zip(agents, timesteps)]
+        # Get game info
+        def get_game_info(controller):
+          _game_info    = controller.game_info()
+          fl_opts       = _game_info.options.feature_layer
+          _screen_size  = point.Point.build(fl_opts.resolution)
+          _minimap_size = point.Point.build(fl_opts.minimap_resolution)
+          _map_size     = point.Point.build(_game_info.start_raw.map_size)
+          _cam_width    = fl_opts.width
 
+          game_info               = {}
+          game_info['screen_sz' ] = _screen_size
+          game_info['minimap_sz'] = _minimap_size
+          game_info['map_sz'    ] = _map_size
+          game_info['cam_width' ] = _cam_width
+
+          return game_info
+
+        game_infos    = [ get_game_info(controller) 
+                            for controller in env._env._controllers ]
+
+        # Invoke correct step function
+        actions = []
+        for agent, timestep, obs, game_info in zip(agents, timesteps, rObs, game_infos):
+
+          if   agent.step.func_code.co_argcount == 2:
+            action = agent.step(timestep)
+
+          elif agent.step.func_code.co_argcount == 3:
+            action = agent.step(timestep, obs)
+
+          elif agent.step.func_code.co_argcount == 4:
+            action = agent.step(timestep, obs, game_info)
+
+          else:
+            raise TypeError
+
+          actions.append(action)
+
+        # Keep track of number of episodes
         if timesteps[0].last():
           total_episodes += 1
 
+        # Terminate when we reach maximum number of episodes
         if max_episodes and total_episodes >= max_episodes:
           return
         elif max_frames and total_frames >= max_frames:
           return
 
+        # Either execute actions and advance observations
+        # Or we reset the environment
         if not timesteps[0].last():
           timesteps = env.step(actions)
         else:
