@@ -45,21 +45,52 @@ class TestAgent(base_agent.BaseAgent):
   def step(self, obs, nObs, game_info):
     super(TestAgent, self).step(obs)
 
+
+    def get_object(arr, x, y):
+
+      if arr[y][x] != 0:
+
+        # Obj id
+        id_ = arr[y][x]
+
+        # Upper left corner?
+        if arr[y-1][x] != id_ and arr[y][x-1] != id_:
+
+          # Scan till you reach right side
+          rX = x
+          while arr[y][rX + 1] == id_: rX += 1
+
+          # Scan till you reach bottom
+          rY = y
+          while arr[rY + 1][x] == id_: rY += 1
+
+          # Return middle
+          return [(rX + x) / 2, (rY + y) / 2]
+
+      return None
+
     # Get game_info
-    _map_size     = game_info['map_sz'    ]
-    _screen_size  = game_info['screen_sz' ]
-    _minimap_size = game_info['minimap_sz']
-    _camera_width = game_info['cam_width' ]
+    _map_size     = game_info['map_size'    ]
+    _screen_size  = game_info['screen_size' ]
+    _minimap_size = game_info['minimap_size']
+    _camera_width = game_info['camera_width']
+    _camera_pos   = game_info['camera_pos'  ]
 
     # Update translate_coord
     if not hasattr(self, '_translate_coord'):
       self._translate_coord = translate_coord.translate_coord()
 
-    self._translate_coord.update(_map_size, _minimap_size, _screen_size, _camera_width)
+    self._translate_coord.update(_map_size   , _minimap_size,
+                                 _screen_size, _camera_width,
+                                 _camera_pos ,              )
 
     # Get some units
     units = parse_obs.get_units(nObs, alliance = 1)
 
+    # Testing Minimap Translation
+    print('#========================================================#')
+    print('#              Testing Minimap Translation               #')
+    print('#========================================================#')
     # Get one
     for unit in units:
       x = unit['pos']['x']
@@ -71,6 +102,30 @@ class TestAgent(base_agent.BaseAgent):
       for x, pt in enumerate(row):
         if pt != 0:
           print('(',x,', ',y,') = ',pt)
+
+    # Ha
+    print('')
+    print('')
+
+    # Testing Screen Translation
+    print('#========================================================#')
+    print('#               Testing Screen Translation               #')
+    print('#========================================================#')
+    for unit in units:
+      x = unit['pos']['x']
+      y = unit['pos']['y']
+
+      print('Unit at:', self._translate_coord.world_to_screen(x, y))
+
+    for y, row in enumerate(obs.observation['screen'][5]):
+      for x, v   in enumerate(row):
+        pt = get_object(obs.observation['screen'][5], x, y)
+        if pt:
+          print('(', pt[0], ', ', pt[1], ') = ', v)
+
+    # Ha
+    print('')
+    print('')
 
     # Stop
     exit()
