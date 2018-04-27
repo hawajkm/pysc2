@@ -207,24 +207,28 @@ def run_loop(agents, env, max_frames=0, max_episodes=1):
         #print(json.dumps(rObs, indent=2, sort_keys=True))
 
         # Get game info
-        def get_game_info(controller):
+        def get_game_info(controller, obs):
           _game_info    = controller.game_info()
           fl_opts       = _game_info.options.feature_layer
           _screen_size  = point.Point.build(fl_opts.resolution)
           _minimap_size = point.Point.build(fl_opts.minimap_resolution)
           _map_size     = point.Point.build(_game_info.start_raw.map_size)
           _cam_width    = fl_opts.width
+          _cam_pos_x    = obs['observation']['raw_data']['player']['camera']['x']
+          _cam_pos_y    = obs['observation']['raw_data']['player']['camera']['y']
 
-          game_info               = {}
-          game_info['screen_sz' ] = _screen_size
-          game_info['minimap_sz'] = _minimap_size
-          game_info['map_sz'    ] = _map_size
-          game_info['cam_width' ] = _cam_width
+          game_info                 = {}
+          game_info['screen_size' ] = _screen_size
+          game_info['minimap_size'] = _minimap_size
+          game_info['map_size'    ] = _map_size
+          game_info['camera_width'] = _cam_width
+          game_info['camera_pos'  ] = {'x': _cam_pos_x,
+                                       'y': _cam_pos_y}
 
           return game_info
 
-        game_infos    = [ get_game_info(controller) 
-                            for controller in env._env._controllers ]
+        game_infos    = [ get_game_info(controller, obs)
+                            for obs, controller in zip(rObs, env._env._controllers) ]
 
         # Invoke correct step function
         actions = []
