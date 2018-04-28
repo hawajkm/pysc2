@@ -19,6 +19,8 @@ from __future__ import print_function
 
 import numpy
 import json
+import copy
+import math
 
 from pysc2.agents import base_agent
 from pysc2.lib import actions
@@ -38,7 +40,7 @@ _ATTACK_SCREEN = actions.FUNCTIONS.Attack_screen.id
 _SELECT_ARMY = actions.FUNCTIONS.select_army.id
 _NOT_QUEUED = [0]
 _SELECT_ALL = [0]
-
+_SELECT_POINT = actions.FUNCTIONS.select_point.id
 class TestAgent(base_agent.BaseAgent):
   """A random agent for starcraft."""
 
@@ -90,7 +92,32 @@ class TestAgent(base_agent.BaseAgent):
                                  _camera_pos ,              )
 
     # Get some units
-
+    units = parse_obs.get_units(nObs, alliance = 1)				
+    crystals = parse_obs.get_units(nObs, alliance = 3)			#get crystals 
+    myunits = copy.deepcopy(units)					#create own version of units so that I can change locations and preserve originals 
+    mycrystals = copy.deepcopy(crystals)			#create own version of crystals so that I can change locations and preserve originals 
+    for unit in myunits:							#loop through individual units to translate position 
+      unit['pos']['x'] = self._translate_coord.world_to_screen(unit['pos']['x'])		#Translate X Position 
+      unit['pos']['y'] = self._translate_coord.world_to_screen(unit['pos']['y'])		#Translate Y Position 
+    for crystal in mycrystals:						#loop through individual crystals
+      crystal['pos']['x'] = self._translate_coord.world_to_screen(crystal['pos']['x'])	#Translate Crystal X Position 
+      crystal['pos']['y'] = self._translate_coord.world_to_screen(crystal['pos']['y'])	#Translate Crystal Y Position
+    distlist = []									#create an empty list for entering the distances from each agent to a particular crystal
+#                                                   #This is a list of lists. Each list is a list of dictionaries that contains the tag along with the distance
+#                                                   #to a given crystal. For example, the first list contains a dictionary of each unit tag and their distance
+#                                                   #from the first crystal, the second contains the distance to the second crystal and so on. 
+    for crystal in mycrystals:						#loop over all crystals
+      singlecrystaldist = []						#create (and reset) an empty list for the distances from each individual crystal
+      for unit in units:							#loop over the units
+        xdist = unit['pos']['x'] - crystal['pos']['x']	#find x distance difference
+        ydist = unit['pos']['y'] - crystal['pos']['y']	#find y distance difference
+        dist = xdist*xdist + ydist*ydist				#find difference of square of distances
+        dist = math.sqrt(dist)							#take square root (thus computing the distance)
+        a = {unit['tag'] : dist}						#create(or append) a dictionary with the tag and its distance from a given crystal
+        singlecrystaldist.append(a)						#append the list for the given crystal with the distance for the current unit
+      distlist.append(singlecrystaldist)				#append the overall list with the distances from the current crystal
+    print(distlist)										#print for testing
+	
     # Testing Minimap Translation
     print('#========================================================#')
     print('#              Testing Minimap Translation               #')
@@ -102,7 +129,7 @@ class TestAgent(base_agent.BaseAgent):
       y = unit['pos']['y']
 
       print('Alliance 1 Unit at:', self._translate_coord.world_to_minimap(x, y))
-
+    target = self._translate_coord.world_to_screen(x,y)		#calculate a target for testing selecting and moving
     # Get one
     units = parse_obs.get_units(nObs, alliance = 3)
     for unit in units:
@@ -131,23 +158,26 @@ class TestAgent(base_agent.BaseAgent):
 
       print('Alliance 1 Unit at:', self._translate_coord.world_to_screen(x, y))
 
-    units = parse_obs.get_units(nObs, alliance = 3)
-    for unit in units:
-      x = unit['pos']['x']
-      y = unit['pos']['y']
+#    units = parse_obs.get_units(nObs, alliance = 3)
+#    for unit in units:
+#      x = unit['pos']['x']
+#      y = unit['pos']['y']
 
-      print('Alliance 3 Unit at:', self._translate_coord.world_to_screen(x, y))
+#      print('Alliance 3 Unit at:', self._translate_coord.world_to_screen(x, y))
 
-    for y, row in enumerate(obs.observation['screen'][5]):
-      for x, v   in enumerate(row):
-        pt = get_object(obs.observation['screen'][5], x, y)
-        if pt:
-          print('(', pt[0], ', ', pt[1], ') = ', v)
+#    for y, row in enumerate(obs.observation['screen'][5]):
+#      for x, v   in enumerate(row):
+#        pt = get_object(obs.observation['screen'][5], x, y)
+#        if pt:
+#          print('(', pt[0], ', ', pt[1], ') = ', v)
 
     # Ha
     print('')
     print('')
 
+    if units[1]['is_selected'] == True:
+      return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [20, 20]])
+    return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
     # Stop
     exit()
 
