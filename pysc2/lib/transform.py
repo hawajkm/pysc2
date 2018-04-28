@@ -134,3 +134,22 @@ class Center(Transform):
 
   def back_pt(self, pt):
     return pt.floor() + 0.5
+
+
+class PixelToCoord(Transform):
+  """Take a point within a pixel and use the tl, or tl to pixel center."""
+
+  def fwd_dist(self, dist):
+    return dist
+
+  def fwd_pt(self, pt):
+    return pt.floor()
+
+  def back_dist(self, dist):
+    return dist
+
+  def back_pt(self, pt):
+    return pt.floor() + 0.5
+
+  def __str__(self):
+    return "PixelToCoord()"
