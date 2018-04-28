@@ -54,18 +54,23 @@ class TestAgent(base_agent.BaseAgent):
         id_ = arr[y][x]
 
         # Upper left corner?
-        if arr[y-1][x] != id_ and arr[y][x-1] != id_:
-
-          # Scan till you reach right side
-          rX = x
-          while arr[y][rX + 1] == id_: rX += 1
+        if arr[y-1][x] != id_ and arr[y][x-1] != id_ and arr[y-1][x+1] != id_:
 
           # Scan till you reach bottom
           rY = y
           while arr[rY + 1][x] == id_: rY += 1
 
+          # Middle
+          mY = int(round((rY + y) / 2))
+          nX = x
+          while arr[mY][nX - 1] == id_: nX -= 1
+
+          # Scan till you reach right side
+          rX = nX
+          while arr[mY][rX + 1] == id_: rX += 1
+
           # Return middle
-          return [(rX + x) / 2, (rY + y) / 2]
+          return [(rX + nX) / 2, (rY + y) / 2]
 
       return None
 
@@ -85,18 +90,26 @@ class TestAgent(base_agent.BaseAgent):
                                  _camera_pos ,              )
 
     # Get some units
-    units = parse_obs.get_units(nObs, alliance = 1)
 
     # Testing Minimap Translation
     print('#========================================================#')
     print('#              Testing Minimap Translation               #')
     print('#========================================================#')
     # Get one
+    units = parse_obs.get_units(nObs, alliance = 1)
     for unit in units:
       x = unit['pos']['x']
       y = unit['pos']['y']
 
-      print('Unit at:', self._translate_coord.world_to_minimap(x, y))
+      print('Alliance 1 Unit at:', self._translate_coord.world_to_minimap(x, y))
+
+    # Get one
+    units = parse_obs.get_units(nObs, alliance = 3)
+    for unit in units:
+      x = unit['pos']['x']
+      y = unit['pos']['y']
+
+      print('Alliance 3 Unit at:', self._translate_coord.world_to_minimap(x, y))
 
     for y, row in enumerate(obs.observation['minimap'][5]):
       for x, pt in enumerate(row):
@@ -111,11 +124,19 @@ class TestAgent(base_agent.BaseAgent):
     print('#========================================================#')
     print('#               Testing Screen Translation               #')
     print('#========================================================#')
+    units = parse_obs.get_units(nObs, alliance = 1)
     for unit in units:
       x = unit['pos']['x']
       y = unit['pos']['y']
 
-      print('Unit at:', self._translate_coord.world_to_screen(x, y))
+      print('Alliance 1 Unit at:', self._translate_coord.world_to_screen(x, y))
+
+    units = parse_obs.get_units(nObs, alliance = 3)
+    for unit in units:
+      x = unit['pos']['x']
+      y = unit['pos']['y']
+
+      print('Alliance 3 Unit at:', self._translate_coord.world_to_screen(x, y))
 
     for y, row in enumerate(obs.observation['screen'][5]):
       for x, v   in enumerate(row):
