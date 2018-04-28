@@ -158,26 +158,26 @@ class TestAgent(base_agent.BaseAgent):
 
       print('Alliance 1 Unit at:', self._translate_coord.world_to_screen(x, y))
 
-#    units = parse_obs.get_units(nObs, alliance = 3)
-#    for unit in units:
-#      x = unit['pos']['x']
-#      y = unit['pos']['y']
+    units = parse_obs.get_units(nObs, alliance = 3)
+    for unit in units:
+      x = unit['pos']['x']
+      y = unit['pos']['y']
 
-#      print('Alliance 3 Unit at:', self._translate_coord.world_to_screen(x, y))
+      print('Alliance 3 Unit at:', self._translate_coord.world_to_screen(x, y))
 
-#    for y, row in enumerate(obs.observation['screen'][5]):
-#      for x, v   in enumerate(row):
-#        pt = get_object(obs.observation['screen'][5], x, y)
-#        if pt:
-#          print('(', pt[0], ', ', pt[1], ') = ', v)
+    for y, row in enumerate(obs.observation['screen'][5]):
+      for x, v   in enumerate(row):
+        pt = get_object(obs.observation['screen'][5], x, y)
+        if pt:
+          print('(', pt[0], ', ', pt[1], ') = ', v)
 
     # Ha
     print('')
     print('')
 
-    if units[1]['is_selected'] == True:
-      return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [20, 20]])
-    return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
+#    if units[1]['is_selected'] == True:									#Check if a unit is selected
+#      return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [20, 20]])	#If a unit is selected, move it
+#    return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])		#Select a unit if one is not selected
     # Stop
     exit()
 
