@@ -121,6 +121,29 @@ class TestAgent(base_agent.BaseAgent):
     print(distlist)										#print for testing
     print("distlist 0 0")
     print(distlist[0][0])
+    
+
+    for crystalList in distlist:						#Loop over all crystal lists
+      listlength = len(crystalList)						#find list length
+      i = 0												#set(reset) loop counter
+      while (i < listlength):							#loop according to number of elements in a single list
+#Ok so this loop structure probably looks super weird. What it does is, I want to compare all elements of each list (so each individual unit)
+#with all the other units without comparing each individual to itself. This allows us to figure out if that unit is indeed closer to the crystal or not
+#I do this by keeping the original list and creating a second independent one with that individual removed (thus the pop instruction)
+#I then set is_closest true only in the case that it is closer than the other units.
+#If you check out the print instruction, it looks like its working. It is also scalable since I actually count the number of elements in the list
+        newlist = copy.deepcopy(crystalList)
+        newlist.pop(i)
+        j = 0
+        while (j < (listlength - 1)):
+          if newlist[j]['dist'] > crystalList[i]['dist']:
+            crystalList[i]['is_closest'] = True
+          else:
+            crystalList[i]['is_closest'] = False
+          j = j + 1
+        i = i + 1
+    print(distlist)										#print updated list of lists. This tells you which unit is closest to which crystal and can
+#														#further used to set which unit should go to which crystal
     # Testing Minimap Translation
     print('#========================================================#')
     print('#              Testing Minimap Translation               #')
