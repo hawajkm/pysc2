@@ -95,21 +95,31 @@ class TestAgent(base_agent.BaseAgent):
     units = parse_obs.get_units(nObs, alliance = 1)				
     crystals = parse_obs.get_units(nObs, alliance = 3)			#get crystals 
     myunits = copy.deepcopy(units)					#create own version of units so that I can change locations and preserve originals
-    print(myunits)	
+#    print(myunits)	
     mycrystals = copy.deepcopy(crystals)			#create own version of crystals so that I can change locations and preserve originals 
     for unit in myunits:							#loop through individual units to translate position 
-      unit['pos']['x'] = self._translate_coord.world_to_screen(unit['pos']['x'])		#Translate X Position 
-      unit['pos']['y'] = self._translate_coord.world_to_screen(unit['pos']['y'])		#Translate Y Position 
+      x = unit['pos']['x']
+      y = unit['pos']['y']
+      (x, y) = self._translate_coord.world_to_screen(x, y)
+      unit['pos']['x'] = x 
+      unit['pos']['y'] = y
+
     for crystal in mycrystals:						#loop through individual crystals
-      crystal['pos']['x'] = self._translate_coord.world_to_screen(crystal['pos']['x'])	#Translate Crystal X Position 
-      crystal['pos']['y'] = self._translate_coord.world_to_screen(crystal['pos']['y'])	#Translate Crystal Y Position
+      x = crystal['pos']['x']
+      y = crystal['pos']['y']
+      (x, y) = self._translate_coord.world_to_screen(x, y)
+      crystal['pos']['x'] = x 
+      crystal['pos']['y'] = y
+
+    print(myunits)
+    print(mycrystals)
     distlist = []									#create an empty list for entering the distances from each agent to a particular crystal
 #                                                   #This is a list of lists. Each list is a list of dictionaries that contains the tag along with the distance
 #                                                   #to a given crystal. For example, the first list contains a dictionary of each unit tag and their distance
 #                                                   #from the first crystal, the second contains the distance to the second crystal and so on. 
     for crystal in mycrystals:						#loop over all crystals
       singlecrystaldist = []						#create (and reset) an empty list for the distances from each individual crystal
-      for unit in units:							#loop over the units
+      for unit in myunits:							#loop over the units
         xdist = unit['pos']['x'] - crystal['pos']['x']	#find x distance difference
         ydist = unit['pos']['y'] - crystal['pos']['y']	#find y distance difference
         dist = xdist*xdist + ydist*ydist				#find difference of square of distances
@@ -156,6 +166,8 @@ class TestAgent(base_agent.BaseAgent):
 
       print('Alliance 1 Unit at:', self._translate_coord.world_to_minimap(x, y))
     target = self._translate_coord.world_to_screen(x,y)		#calculate a target for testing selecting and moving
+    print("target")
+    print(target)
     # Get one
     units = parse_obs.get_units(nObs, alliance = 3)
     for unit in units:
