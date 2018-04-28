@@ -94,7 +94,8 @@ class TestAgent(base_agent.BaseAgent):
     # Get some units
     units = parse_obs.get_units(nObs, alliance = 1)				
     crystals = parse_obs.get_units(nObs, alliance = 3)			#get crystals 
-    myunits = copy.deepcopy(units)					#create own version of units so that I can change locations and preserve originals 
+    myunits = copy.deepcopy(units)					#create own version of units so that I can change locations and preserve originals
+    print(myunits)	
     mycrystals = copy.deepcopy(crystals)			#create own version of crystals so that I can change locations and preserve originals 
     for unit in myunits:							#loop through individual units to translate position 
       unit['pos']['x'] = self._translate_coord.world_to_screen(unit['pos']['x'])		#Translate X Position 
@@ -113,11 +114,13 @@ class TestAgent(base_agent.BaseAgent):
         ydist = unit['pos']['y'] - crystal['pos']['y']	#find y distance difference
         dist = xdist*xdist + ydist*ydist				#find difference of square of distances
         dist = math.sqrt(dist)							#take square root (thus computing the distance)
-        a = {unit['tag'] : dist}						#create(or append) a dictionary with the tag and its distance from a given crystal
+        a = {'tag': unit['tag'], 'dist' : dist, 'crystalpos' : crystal['pos'], 'unitpos' : unit['pos'], 'is_closest' : False}			
+#		#create(or append) a dictionary with the tag and its distance from a given crystal
         singlecrystaldist.append(a)						#append the list for the given crystal with the distance for the current unit
       distlist.append(singlecrystaldist)				#append the overall list with the distances from the current crystal
     print(distlist)										#print for testing
-	
+    print("distlist 0 0")
+    print(distlist[0][0])
     # Testing Minimap Translation
     print('#========================================================#')
     print('#              Testing Minimap Translation               #')
