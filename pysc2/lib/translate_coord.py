@@ -93,7 +93,7 @@ class translate_coord(object):
         self._reorient_world,
         self._world_to_screen,
         self._screen_to_fl_screen,
-        transform.Floor())
+        transform.PixelToCoord())
 
   #-----------------------------------------------------------------------
   # Translation Meta-Function
