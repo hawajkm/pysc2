@@ -272,6 +272,7 @@ def run_loop(agents, env, max_frames=0, max_episodes=1):
         else:
           timesteps = env.reset()
 
+        time.sleep(0.3)
   except KeyboardInterrupt:
     pass
   finally:
