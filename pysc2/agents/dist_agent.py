@@ -179,7 +179,7 @@ class TestAgent(base_agent.BaseAgent):
               dist = math.sqrt(dist)							#take square root (thus computing the distance)
               bid = {}
               if dist <= radius:
-                bid = {'crystal' : crystal['tag'], 'bid' : dist, 'unit' :unit['tag'], 'crystal_assigned' : False}
+                bid = {'crystal' : crystal['tag'], 'bid' : dist, 'unit' :unit['tag'], 'crystal_assigned' : False, 'unit_assigned' : False}
 #                bid[crystal['tag']] = {'bid' : dist, 'unit' : unit['tag']}
 #                print(bid)
                 crystalbidlist[c].append(bid.copy())
@@ -190,11 +190,15 @@ class TestAgent(base_agent.BaseAgent):
       print(crystalbidlist)
       assignmentlist = []
       for crystalbid in crystalbidlist:
-        print("Length of crystal bid")
-        print(len(crystalbid))
+#        print("Length of crystal bid")
+#        print(len(crystalbid))
         i = 0
         if(crystalbid[i]['crystal_assigned'] == True):
           print("Already assigned")
+        
+        elif(crystalbid[i]['unit_assigned'] == True):
+          print("Unit already assigned")
+		
         else:
           while(i < len(crystalbid)):
             tempbid = copy.deepcopy(crystalbid)
@@ -215,7 +219,12 @@ class TestAgent(base_agent.BaseAgent):
                 print("assignmentlist")
                 print(assignmentlist)
                 crystalbid[i]['crystal_assigned'] = True
-#                for crystalbid in crystalbidlist:
+                for crystalbid in crystalbidlist:
+                  for individual in crystalbid:
+                    if(individual['unit'] == crystalbid[i]['unit']):
+                      individual['unit_assigned'] = True
+#                    else:
+#                      individual['unit_assigned'] = False
                   
                 break
               j = j + 1
