@@ -46,6 +46,16 @@ _UNASSIGNED = 1
 class CollectMinerals(base_agent.BaseAgent):
   def __init__(self):
     super(CollectMinerals, self).__init__()
+    #self.minerals = {}    # Found minerals - state and position info
+    #self.scvs = {}        # Found scvs -  position info
+    #self.scv_states = {}  # SCV states - assigned mineral, position, state
+    #self.scv_keys = None  # List of SCV tags, to be iterated through
+    #self.curr_scv = -1    # Current SCV of step
+    #self.done_initializing = False
+
+  def reset(self):
+    super(CollectMinerals, self).reset()
+    print("RESET")
     self.minerals = {}    # Found minerals - state and position info
     self.scvs = {}        # Found scvs -  position info
     self.scv_states = {}  # SCV states - assigned mineral, position, state
@@ -66,7 +76,7 @@ class CollectMinerals(base_agent.BaseAgent):
         pos['y'] = pt.y
         self.minerals[unit['tag']] = {'pos':pos, 'state':_UNASSIGNED}  
   
-    print("MINERALS:")
+    print("MINERALS FOUND:")
     print(json.dumps(self.minerals, indent=4, sort_keys=True))  
 
   # Find the locations of each SCV screen
@@ -83,8 +93,6 @@ class CollectMinerals(base_agent.BaseAgent):
         pos['y'] = pt.y
         self.scvs[unit['tag']] = {'pos': pos}
   
-    print("SCVS:")
-    print(json.dumps(self.scvs, indent=4, sort_keys=True))  
   
   # Initialize dictionary to hold scv states
   # Fields: position, assigned_mineral, state
@@ -92,7 +100,7 @@ class CollectMinerals(base_agent.BaseAgent):
     for key, val in self.scvs.items():
       pos = val['pos']
       self.scv_states[key] = {'pos': pos, 'state': None, 'assigned_mineral': {'tag':None, 'x':None, 'y':None}}
-    print(json.dumps(self.scv_states, indent=4, sort_keys=True))  
+    #print(json.dumps(self.scv_states, indent=4, sort_keys=True))  
     # Get SCV keys in list
     self.scv_keys = list(self.scv_states.keys())
 
@@ -103,6 +111,9 @@ class CollectMinerals(base_agent.BaseAgent):
  
   # Assign closest mineral to self.scv[tag]
   def assign(self,tag):
+    print("ASSIGNING")
+    print("MINERALS - BEFORE:")
+    print(json.dumps(self.minerals, indent=4, sort_keys=True))  
     # Find first unassigned mineral to set as initial closest
     m_keys = list(self.minerals.keys())
     first_min_tag = m_keys[0]
@@ -143,13 +154,13 @@ class CollectMinerals(base_agent.BaseAgent):
       
     print("ASSIGNMENTS:")
     print(json.dumps(self.scv_states, indent=4, sort_keys=True))
-    print("MINERALS:")
+    print("MINERALS - AFTER:")
     print(json.dumps(self.minerals, indent=4, sort_keys=True))  
 
   def step(self,oObs,rObs, game_info):
     super(CollectMinerals,self).step(oObs)
 
-    # Get game_info
+   # Get game_info
     _map_size     = game_info['map_size'    ]
     _screen_size  = game_info['screen_size' ]
     _minimap_size = game_info['minimap_size']
@@ -166,6 +177,7 @@ class CollectMinerals(base_agent.BaseAgent):
 
     # Initialize
     if not self.done_initializing:
+      print("INITIALIZING")
       self.find_scvs(rObs)
       self.find_minerals(rObs)    
       self.init_scv_dict()
@@ -181,7 +193,8 @@ class CollectMinerals(base_agent.BaseAgent):
       self.update_scv_loc(rObs)
       
       # Iterate through all SCVs
-      if (self.scv_states[self.scv_keys[self.curr_scv]]['state'] != _MOVED):
+      # If current SCV is selected, do not toggle SCV
+      if (self.scv_states[self.scv_keys[self.curr_scv]]['state'] == _SELECTED):
         self.curr_scv = self.curr_scv
       elif (self.curr_scv < len(self.scv_keys)-1):
         self.curr_scv += 1
@@ -219,10 +232,10 @@ class CollectMinerals(base_agent.BaseAgent):
         scv_y = scv_val['pos']['y']
         min_x = scv_val['assigned_mineral']['x']
         min_y = scv_val['assigned_mineral']['y']
-        if (abs(scv_x - min_x) == 0 and abs(scv_y - min_y) == 0):
+        if (scv_x == min_x and scv_y == min_y):
           # SCV has reached mineral, so re-assign
-          self.assign(scv_tag)
           print("COLLECTED MINERAL") 
+          self.assign(scv_tag)
         action = _NOOP    
 
     # Execute action
