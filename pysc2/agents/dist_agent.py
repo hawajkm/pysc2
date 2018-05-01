@@ -179,7 +179,7 @@ class TestAgent(base_agent.BaseAgent):
               dist = math.sqrt(dist)							#take square root (thus computing the distance)
               bid = {}
               if dist <= radius:
-                bid = {'crystal' : crystal['tag'], 'bid' : dist, 'unit' :unit['tag'], 'is_assigned' : False}
+                bid = {'crystal' : crystal['tag'], 'bid' : dist, 'unit' :unit['tag'], 'crystal_assigned' : False}
 #                bid[crystal['tag']] = {'bid' : dist, 'unit' : unit['tag']}
 #                print(bid)
                 crystalbidlist[c].append(bid.copy())
@@ -190,29 +190,33 @@ class TestAgent(base_agent.BaseAgent):
       print(crystalbidlist)
       assignmentlist = []
       for crystalbid in crystalbidlist:
+        print("Length of crystal bid")
+        print(len(crystalbid))
         i = 0
-        if(crystalbid[i]['is_assigned'] == True):
+        if(crystalbid[i]['crystal_assigned'] == True):
           print("Already assigned")
         else:
-          while(i < numunits):
+          while(i < len(crystalbid)):
             tempbid = copy.deepcopy(crystalbid)
             tempbid.pop(i)
             print("tempbid")
             print(tempbid)
             j = 0
             numg = 0
-            while(j < numunits - 1):
+            while(j < len(crystalbid) - 1):
               if(crystalbid[i]['bid'] < tempbid[j]['bid']):
                 numg = numg + 1
               else:
                 break
-              if(numg == numunits - 1):
+              if(numg == len(crystalbid) - 1):
                 assignment = {}
                 assignment = {crystalbid[i]['unit'] : crystalbid[i]['bid']}
                 assignmentlist.append(assignment)
                 print("assignmentlist")
                 print(assignmentlist)
-                crystalbid[i]['is_assigned'] = True
+                crystalbid[i]['crystal_assigned'] = True
+#                for crystalbid in crystalbidlist:
+                  
                 break
               j = j + 1
             i = i + 1				
