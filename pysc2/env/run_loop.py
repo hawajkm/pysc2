@@ -198,81 +198,84 @@ def run_loop(agents, env, max_frames=0, max_episodes=1):
       for a in agents:
         a.reset()
       while True:
-        total_frames += 1
 
-        # Get raw observations
-        rObs = [parse_observations(mObs) for mObs in env._env._obs]
+        # Check if episode has concluded
 
-        # Print the global observations
-        #print(json.dumps(rObs, indent=2, sort_keys=True))
-
-        # Get game info
-        def get_game_info(controller, obs):
-          _game_info    = controller.game_info()
-          fl_opts       = _game_info.options.feature_layer
-          _screen_size  = point.Point.build(fl_opts.resolution)
-          _minimap_size = point.Point.build(fl_opts.minimap_resolution)
-          _map_size     = point.Point.build(_game_info.start_raw.map_size)
-          _cam_width    = fl_opts.width
-          _cam_pos_x    = obs['observation']['raw_data']['player']['camera']['x']
-          _cam_pos_y    = obs['observation']['raw_data']['player']['camera']['y']
-
-          game_info                 = {}
-          game_info['screen_size' ] = _screen_size
-          game_info['minimap_size'] = _minimap_size
-          game_info['map_size'    ] = _map_size
-          game_info['camera_width'] = _cam_width
-          game_info['camera_pos'  ] = {'x': _cam_pos_x,
-                                       'y': _cam_pos_y}
-
-          return game_info
-
-        game_infos    = [ get_game_info(controller, obs)
-                            for obs, controller in zip(rObs, env._env._controllers) ]
-
-        # Invoke correct step function
-        actions = []
-        for agent, timestep, obs, game_info in zip(agents, timesteps, rObs, game_infos):
-
-          # Get number of arguments
-          try:
-            # Try for Python 3.x
-            num_args = len(inspect.signature(agent.step).parameters)
-          except:
-            num_args = len(inspect.getargspec(agent.step)) - 1
-
-          if   num_args == 1:
-            action = agent.step(timestep)
-
-          elif num_args == 2:
-            action = agent.step(timestep, obs)
-
-          elif num_args == 3:
-            action = agent.step(timestep, obs, game_info)
-
-          else:
-            raise TypeError
-
-          actions.append(action)
-
-        # Keep track of number of episodes
         if timesteps[0].last():
+
+          # Episode concluded
           total_episodes += 1
-
-        # Terminate when we reach maximum number of episodes
-        if max_episodes and total_episodes >= max_episodes:
-          return
-        elif max_frames and total_frames >= max_frames:
-          return
-
-        # Either execute actions and advance observations
-        # Or we reset the environment
-        if not timesteps[0].last():
-          timesteps = env.step(actions)
-        else:
           timesteps = env.reset()
 
-        time.sleep(0.3)
+        else:
+        
+          # Game on :)
+
+          total_frames += 1
+
+          # Get raw observations
+          rObs = [parse_observations(mObs) for mObs in env._env._obs]
+
+          # Print the global observations
+          #print(json.dumps(rObs, indent=2, sort_keys=True))
+
+          # Get game info
+          def get_game_info(controller, obs):
+            _game_info    = controller.game_info()
+            fl_opts       = _game_info.options.feature_layer
+            _screen_size  = point.Point.build(fl_opts.resolution)
+            _minimap_size = point.Point.build(fl_opts.minimap_resolution)
+            _map_size     = point.Point.build(_game_info.start_raw.map_size)
+            _cam_width    = fl_opts.width
+            _cam_pos_x    = obs['observation']['raw_data']['player']['camera']['x']
+            _cam_pos_y    = obs['observation']['raw_data']['player']['camera']['y']
+
+            game_info                 = {}
+            game_info['screen_size' ] = _screen_size
+            game_info['minimap_size'] = _minimap_size
+            game_info['map_size'    ] = _map_size
+            game_info['camera_width'] = _cam_width
+            game_info['camera_pos'  ] = {'x': _cam_pos_x,
+                                         'y': _cam_pos_y}
+
+            return game_info
+
+          game_infos    = [ get_game_info(controller, obs)
+                              for obs, controller in zip(rObs, env._env._controllers) ]
+
+          # Invoke correct step function
+          actions = []
+          for agent, timestep, obs, game_info in zip(agents, timesteps, rObs, game_infos):
+
+            # Get number of arguments
+            try:
+              # Try for Python 3.x
+              num_args = len(inspect.signature(agent.step).parameters)
+            except:
+              num_args = len(inspect.getargspec(agent.step)) - 1
+
+            if   num_args == 1:
+              action = agent.step(timestep)
+
+            elif num_args == 2:
+              action = agent.step(timestep, obs)
+
+            elif num_args == 3:
+              action = agent.step(timestep, obs, game_info)
+
+            else:
+              raise TypeError
+
+            actions.append(action)
+
+          # Terminate when we reach maximum number of episodes
+          if max_episodes and total_episodes >= max_episodes:
+            return
+          elif max_frames and total_frames >= max_frames:
+            return
+
+          timesteps = env.step(actions)
+
   except KeyboardInterrupt:
     pass
   finally:
