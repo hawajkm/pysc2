@@ -251,31 +251,35 @@ class TestAgent(base_agent.BaseAgent):
               j = j + 1
             i = i + 1				
 
-      print(crystalbidlist)
-      print("numassigned")
-      print(numassigned)
+#      print(crystalbidlist)
+#      print("numassigned")
+#      print(numassigned)
+      print("assignmentlist")
+      print(assignmentlist)
 #      exit()
 
           
-
-    for assignmentmade in assignmentlist:
-      if(assignmentmade['unit_selected'] == False and assignmentmade['unit_active'] == False):
-        x = assignmentmade['unitpos']['x']
-        y = assignmentmade['unitpos']['y']
-        target = (x, y)
-        return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
-      elif(assignmentmade['unit_selected'] == True and assignmentmade['unit_active'] == False):
-        assignmentmade['unit_active'] == True
-        x = assignmentmade['crystalpos']['x']
-        y = assignmentmade['crystalpos']['y']
-        target = (x, y)
-        return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, target])
-      elif(assignmentmade['unit_active'] == True):
-        break
+    print("assignmentlist")
+    print(assignmentlist)    
+#    for assignmentmade in assignmentlist:
+#      print(assignmentmade)
+#      if(assignmentmade['unit_selected'] == False and assignmentmade['unit_active'] == False):
+#        x = assignmentmade['unitpos']['x']
+#        y = assignmentmade['unitpos']['y']
+#        target = (x, y)
+#        return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
+#      elif(assignmentmade['unit_selected'] == True and assignmentmade['unit_active'] == False):
+#        assignmentmade['unit_active'] == True
+#        x = assignmentmade['crystalpos']['x']
+#        y = assignmentmade['crystalpos']['y']
+#        target = (x, y)
+#        return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, target])
+#      elif(assignmentmade['unit_active'] == True):
+#        pass
 #    if units[1]['is_selected'] == True:									#Check if a unit is selected
 #      return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [20, 20]])	#If a unit is selected, move it
 #    return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])		#Select a unit if one is not selected
     # Stop
-#    exit()
+    exit()
 
     return actions.FunctionCall(_NO_OP, [])
