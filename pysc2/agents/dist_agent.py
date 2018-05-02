@@ -134,14 +134,14 @@ class TestAgent(base_agent.BaseAgent):
 	
     count = 0
     numassigned = 0
-    dist = 0
-    dist2 = 0
-    numg = 0
+#    dist = 0
+#    dist2 = 0
+#    numg = 0
     c = 0
     numpending = 0
     crystalcount = 0
-    crystalbidlist = []
-    bid = {}
+#    crystalbidlist = []
+#    bid = {}
     if numunits < numcrystals:
       count = numunits
     else:
@@ -250,7 +250,8 @@ class TestAgent(base_agent.BaseAgent):
                 break
               j = j + 1
             i = i + 1				
-
+        #write code for random walk here
+#		if(numassigned < count):
 #      print(crystalbidlist)
 #      print("numassigned")
 #      print(numassigned)
