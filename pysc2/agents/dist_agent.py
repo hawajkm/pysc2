@@ -179,8 +179,12 @@ class TestAgent(base_agent.BaseAgent):
               dist = math.sqrt(dist)							#take square root (thus computing the distance)
               bid = {}
               if dist <= radius:
-                bid = {'crystal' : crystal['tag'], 'bid' : dist, 'unit' :unit['tag'], 'crystal_assigned' : False, 'unit_assigned' : False}
+                bid = {'crystal' : crystal['tag'], 'bid' : dist, 'unit' :unit['tag'], 'crystal_assigned' : False, 'unit_assigned' : False, 'crystalpos' : crystal['pos'], 'unitpos' : unit['pos'], 'is_collected' : crystal['is_collected'], 'unit_selected' : unit['is_selected']}
 #                bid[crystal['tag']] = {'bid' : dist, 'unit' : unit['tag']}
+                print("original bid")
+                print(bid)
+#                crystal['tag'] = '0000'
+#                print("change made to tag of crystal")
 #                print(bid)
                 crystalbidlist[c].append(bid.copy())
 #                crystal['bid_pending'] = True
@@ -189,6 +193,7 @@ class TestAgent(base_agent.BaseAgent):
       print("crystalbidlist")
       print(crystalbidlist)
       assignmentlist = []
+	  
       for crystalbid in crystalbidlist:
 #        print("Length of crystal bid")
 #        print(len(crystalbid))
@@ -196,8 +201,9 @@ class TestAgent(base_agent.BaseAgent):
         if(crystalbid[i]['crystal_assigned'] == True):
           print("Already assigned")
         
-        elif(crystalbid[i]['unit_assigned'] == True):
-          print("Unit already assigned")
+#        elif(crystalbid[i]['crystal_assigned'] == False):
+#          if(crystalbid[i]['unit_assigned'] == True
+#			print("Unit already assigned")
 		
         else:
           while(i < len(crystalbid)):
@@ -208,113 +214,68 @@ class TestAgent(base_agent.BaseAgent):
             j = 0
             numg = 0
             while(j < len(crystalbid) - 1):
-              if(crystalbid[i]['bid'] < tempbid[j]['bid']):
-                numg = numg + 1
-              else:
+              if(crystalbid[i]['crystal_assigned'] == True):
                 break
+              if(crystalbid[i]['unit_assigned'] == True):
+                break
+              if(tempbid[j]['unit_assigned'] == True):
+#                j = j + 1
+                numg = numg + 1
+#                break
+              elif(crystalbid[i]['bid'] < tempbid[j]['bid']):
+                numg = numg + 1
+#              else:
+#                break
+              print("numg")
+              print(numg)
               if(numg == len(crystalbid) - 1):
                 assignment = {}
-                assignment = {crystalbid[i]['unit'] : crystalbid[i]['bid']}
-                assignmentlist.append(assignment)
+                assignment = {'unit' : crystalbid[i]['unit'], 'crystal' : crystalbid[i]['crystal'], 'bid' : crystalbid[i]['bid'], 'crystalpos' : crystalbid[i]['crystalpos'], 'unitpos' : crystalbid[i]['unitpos'], 'unit_selected' : crystalbid[i]['unit_selected'], 'crystalcollected' : crystalbid[i]['is_collected'], 'unit_active' : False}
+                assignmentlist.append(assignment.copy())
                 print("assignmentlist")
                 print(assignmentlist)
                 crystalbid[i]['crystal_assigned'] = True
-                for crystalbid in crystalbidlist:
-                  for individual in crystalbid:
+                numassigned = numassigned + 1
+#                for individual in crystalbid:
+#                  individual['crystal_assigned'] = True
+                for bidcrystal in crystalbidlist:
+                  for individual in bidcrystal:
                     if(individual['unit'] == crystalbid[i]['unit']):
                       individual['unit_assigned'] = True
+                    if(individual['crystal'] == crystalbid[i]['crystal']):
+                      individual['crystal_assigned'] = True
 #                    else:
 #                      individual['unit_assigned'] = False
                   
                 break
               j = j + 1
             i = i + 1				
-#        print("crystalbid[0]['bid']")
-#        print(crystalbid[0]['bid'])
-#        i = 0
-#        while(i < numunits):
-#          tempbid = copy.deepcopy(crystalbid)
-#          tempbid.pop(i)
-#          j = 0
-#          while(j < numunits - 1):
-#            if(crystalbid[i]['bid'] < tempbid[j]['bid']):
-#              numg = numg + 1
-#            else:
-#              break
-#            if(numg == numunits - 1):
-#              #statement here
-#            j = j + 1
-#            assignment = 			
-#                numpending = numpending + 1
-#              print("dist")
-#              print(dist)
-#              j = 0
-#              numg = 0
-#              numpending = 0
-#            print("here")
-#              while(j < (numcrystals - 1)):
-#                tempcrystals = copy.deepcopy(crystals)
-#                tempcrystals.pop(c)
-#               xdist2 = unit['pos']['x'] - tempcrystals[j]['pos']['x']	#find x distance difference
-#                ydist2 = unit['pos']['y'] - tempcrystals[j]['pos']['y']	#find y distance difference
-#                dist2 = xdist2*xdist2 + ydist2*ydist2						#find difference of square of distances
-#                dist2 = math.sqrt(dist2)									#take square root (thus computing the distance)
-#              print("dist2")
-#              print(dist2)
-#              print("here2")
-#                if(dist < dist2):
-#                print("numg")
-#                  numg = numg + 1
-#                print(numg)
-#                continue
-#                else:				
-#                  break
-#                j = j + 1
-#                if(numg == (numcrystals - 1 - numpending)):
-#                 if dist <= radius:
-#                    bid[crystal['tag']] = {'bid' : dist, 'crystal' : unit['tag']}
-#                    crystalbidlist[c].append(bid)
-#                    crystal['bid_pending'] = True
-#                    numpending = numpending + 1
-#                  break
-#                elif(numcrystals - numpending == 1):
-#                    bid[crystal['tag']] = {'bid' : dist, 'crystal' : unit['tag']}
-#                    crystalbidlist[c].append(bid)
-#                    crystal['bid_pending'] = True
-#                    numpending = numpending + 1                  
-#            c = c + 1
-#            if(numg == (numcrystals - 1)):
-#              break
+
       print(crystalbidlist)
-      exit()
-#            if dist <= radius:
-#              bid[unit['tag']] = {'bid' : dist, 'crystal' : crystal['tag']}          
-#          i = 0
-#          while(i < numunits):
-#            tempunits = copy.deepcopy(units)
-#			tempunits.pop(i)
-#            j = 0
-#            numg = 0
-#			while(j < (numunits - 1)):
-#              xdist = unit['pos']['x'] - tempunits[j]['pos']['x']	#find x distance difference
-#              ydist = unit['pos']['y'] - tempunits[j]['pos']['y']	#find y distance difference
-#              dist = xdist*xdist + ydist*ydist						#find difference of square of distances
-#              dist = math.sqrt(dist)								#take square root (thus computing the distance)
-#              if(dist <= radius):
-#                numg = numg + 1
-#                continue
-#              else:
-#                break
-#              j = j + 1				
-#              if(numg == numunits - 2)
-                #some line here
+      print("numassigned")
+      print(numassigned)
+#      exit()
+
           
 
-
+    for assignmentmade in assignmentlist:
+      if(assignmentmade['unit_selected'] == False and assignmentmade['unit_active'] == False):
+        x = assignmentmade['unitpos']['x']
+        y = assignmentmade['unitpos']['y']
+        target = (x, y)
+        return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
+      elif(assignmentmade['unit_selected'] == True and assignmentmade['unit_active'] == False):
+        assignmentmade['unit_active'] == True
+        x = assignmentmade['crystalpos']['x']
+        y = assignmentmade['crystalpos']['y']
+        target = (x, y)
+        return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, target])
+      elif(assignmentmade['unit_active'] == True):
+        break
 #    if units[1]['is_selected'] == True:									#Check if a unit is selected
 #      return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [20, 20]])	#If a unit is selected, move it
 #    return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])		#Select a unit if one is not selected
     # Stop
-    exit()
+#    exit()
 
     return actions.FunctionCall(_NO_OP, [])
