@@ -137,7 +137,7 @@ class TestAgent(base_agent.BaseAgent):
 #    dist = 0
 #    dist2 = 0
 #    numg = 0
-    c = 0
+#    c = 0
     numpending = 0
     crystalcount = 0
 #    crystalbidlist = []
