@@ -181,7 +181,7 @@ def parse_observations(obj, depth = 0):
 # By  : Khalid Al-Hawaj
 # Date:  9 April 2018
 
-def run_loop(agents, env, max_frames=0, max_episodes=1, multiagent):
+def run_loop(agents, env, max_frames=0, max_episodes=1, multiagent=''):
   """A run loop to have agents and an environment interact."""
   total_frames = 0
   total_episodes = 0
