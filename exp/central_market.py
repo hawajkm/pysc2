@@ -53,7 +53,7 @@ class CentralMarket(object):
 
     # Auctioning
     runs = 0
-    while(not q.empty() and runs < 1000):
+    while(not q.empty() and runs < 1000 and len(assignments) > 0):
 
       # Keep track of number of runs
       runs += 1
@@ -97,7 +97,6 @@ class CentralMarket(object):
 
         actions.append([winner, minerals[mineral]])
 
-    print(actions)
     # Done!
     return True, actions
 
