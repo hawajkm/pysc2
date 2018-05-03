@@ -1,0 +1,20 @@
+#!/bin/sh
+
+PWD=$(pwd)
+
+export PYTHONPATH=${PWD}
+
+maps=("OneMineralShard"
+      "TwoMineralShards"
+      "ThreeMineralShards"
+      "FourMineralShards"
+      "FiveMineralShards"
+      "SixMineralShards"
+      "SevenMineralShards"
+      "EightMineralShards")
+agent=pysc2.agents.multi_agent.MultiAgent
+number_of_trails=10
+
+for map in ${maps[@]}; do
+  python pysc2/bin/agent.py --map=${map} --agent=${agent} --max_episode_num=${number_of_trails}
+done
