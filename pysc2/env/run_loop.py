@@ -236,9 +236,9 @@ def run_loop(agents, env, map_name, max_frames=0, max_episodes=1, multiagent='')
             writer = csv.writer(csvfile)
 
             writer.writerow(['map', 'results'])
-            for map_name in results:
-              row = [map_name]
-              row.extend(results[map_name])
+            for map_ in results:
+              row = [map_]
+              row.extend(results[map_])
               writer.writerow(row)
 
           # Episode concluded
