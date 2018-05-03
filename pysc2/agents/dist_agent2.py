@@ -14,6 +14,7 @@ import numpy as np
 import json
 import math
 import copy
+import random
 
 # Functions
 _SELECT_POINT = actions.FUNCTIONS.select_point.id
@@ -67,6 +68,8 @@ class DistributedAgent(base_agent.BaseAgent):
     self.numscvs = 0
     self.numassigned = 0
     self.radius = 120
+    self.randomscv = 0
+    self.commcount = 0
 #    self.scv_states = {}  # SCV states - assigned mineral, position, state
 #    self.scv_keys = None  # List of SCV tags, to be iterated through
 #    self.curr_scv = -1    # Current SCV of step
@@ -113,27 +116,46 @@ class DistributedAgent(base_agent.BaseAgent):
     self.numscvs = len(self.scvs)
 		
   def initialize_crystalbidlist(self):
+    self.crystalbidlist = []
     for crystalcount in range(0, self.numcrystals):
       self.crystalbidlist.append([])
 	  
   def createbidlist(self):
     for scv in self.scvs:
       if(scv['scv_assigned'] == True):
-        print("scv assigned")
+	    pass
+#        print("scv assigned")
+#      if(crystal['crystal_assigned'] == True):
+#        pass
       else:
         c = 0
+        print("Checked")
         for crystal in self.crystals:
-          xdist = scv['pos']['x'] - crystal['pos']['x']
-          ydist = scv['pos']['y'] - crystal['pos']['y']
-          dist = xdist*xdist + ydist*ydist
-          dist = math.sqrt(dist)
-          bid = {}
-          if dist <= self.radius:
-            bid = {'crystal' : crystal['crystal_tag'], 'bid' : dist, 'scv' : scv['scv_tag'], 'crystal_assigned' : crystal['crystal_assigned'], 'scv_assigned' : scv['scv_assigned'], 'crystalpos' : crystal['pos'], 'scvpos' : scv['pos'], 'is_selected' : scv['is_selected'], 'scv_active' : scv['is_active']}
-            self.crystalbidlist[c].append(bid)
-          c = c + 1
-		  
-		  
+          if(crystal['crystal_assigned'] == True):
+            pass
+          else:
+            xdist = scv['pos']['x'] - crystal['pos']['x']
+            ydist = scv['pos']['y'] - crystal['pos']['y']
+            dist = xdist*xdist + ydist*ydist
+            dist = math.sqrt(dist)
+            bid = {}
+            if dist <= self.radius:
+              bid = {'crystal' : crystal['crystal_tag'], 'bid' : dist, 'scv' : scv['scv_tag'], 'crystal_assigned' : crystal['crystal_assigned'], 'scv_assigned' : scv['scv_assigned'], 'crystalpos' : crystal['pos'], 'scvpos' : scv['pos'], 'is_selected' : scv['is_selected'], 'scv_active' : scv['is_active']}
+              self.crystalbidlist[c].append(bid)
+            c = c + 1
+	
+  def updateposition(self, nObs):
+    units = parse_obs.get_units(nObs, alliance = 1) 
+    for unit in units:
+      for scv in self.scvs:
+        if(scv['scv_tag'] == unit['tag']):
+          x = unit['pos']['x']
+          y = unit['pos']['y']
+          pt = self._translate_coord.world_to_screen(x,y)
+          pos = {}
+          pos['x'] = pt.x
+          pos['y'] = pt.y
+          scv['pos'] = pos            
   def assign(self):
     for crystalbid in self.crystalbidlist:
       i = 0
@@ -168,11 +190,18 @@ class DistributedAgent(base_agent.BaseAgent):
             for scv in self.scvs:
               if(scv['scv_tag'] == crystalbid[i]['scv']):
                 scv['scv_assigned'] = True
+            for crystal in self.crystals:
+              if(crystal['crystal_tag'] == crystalbid[i]['crystal']):
+                crystal['crystal_assigned'] = True
             break
           j = j + 1
         i = i + 1
 	
 
+#  def randomwalk(self):
+#    x = random.randomint(0, 84)
+#	y = random.randomint(0, 84)
+	
   def step(self,oObs, nObs, game_info):
     super(DistributedAgent,self).step(oObs)
 
@@ -196,8 +225,8 @@ class DistributedAgent(base_agent.BaseAgent):
       print("INITIALIZING")
       self.find_scvs(nObs)
       self.find_minerals(nObs)
-      self.find_counts()
-      self.initialize_crystalbidlist()	  
+#      self.find_counts()
+#      self.initialize_crystalbidlist()	  
       #self.init_scv_dict()
       # For every scv in self.scv_states, assign a mineral
       #for scv_tag in self.scv_states:
@@ -209,7 +238,22 @@ class DistributedAgent(base_agent.BaseAgent):
 	  
     # Main action loop
     else:
+      # self.find_counts()
+      # self.initialize_crystalbidlist()
+      self.updateposition(nObs)
+      self.find_minerals(nObs)
+      self.find_counts()
+      self.initialize_crystalbidlist()
       self.createbidlist()
+	  
+	  
+      for crystalbid in self.crystalbidlist:
+        if(len(crystalbid) == 1):
+          pass
+        else:
+          self.commcount = self.commcount + len(crystalbid)
+	  
+	  
 #      print("initial crystal bid list")
 #      print(self.crystalbidlist)
       self.assign()
@@ -217,6 +261,11 @@ class DistributedAgent(base_agent.BaseAgent):
 #      print(self.assignmentlist)
 #      print("crystal bid list after assignments are made")
  #     print(self.crystalbidlist)
+	
+	# if(self.numassigned == self.numscvs):
+      # for scv in self.scvs:
+        # scv['scv_assigned'] == False
+
 	
 	
     for assignmentmade in self.assignmentlist:
@@ -232,11 +281,83 @@ class DistributedAgent(base_agent.BaseAgent):
         y = assignmentmade['crystalpos']['y']
         target = (x, y)
         assignmentmade['scv_active'] = True
-        print("scvs")
-        print(self.scvs)
+#        print("scvs")
+#        print(self.scvs)
         return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, target])
       elif(assignmentmade['scv_active'] == True):
+#        assignmentmade['scv_active'] = False
+#        assignmentmade['is_selected'] = False
         continue
-    
+#	randomrange = self.numscvs - 1
+#	randomscv = random.randint(0, randomrange)
+
+    print("commcount")
+    print(self.commcount)
+
+    #print(assignmentlist)
+    if(self.numassigned < self.numscvs):
+      if(self.scvs[self.randomscv]['scv_assigned'] == False):
+        if(self.scvs[self.randomscv]['is_selected'] == False and self.scvs[self.randomscv]['is_active'] == False):
+#          self.updateposition(nObs)
+          x = self.scvs[self.randomscv]['pos']['x']
+          y = self.scvs[self.randomscv]['pos']['y']
+          target = (x, y)
+          self.scvs[self.randomscv]['is_selected'] = True
+          self.scvs[self.randomscv]['is_active'] = False
+          return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
+        elif(self.scvs[self.randomscv]['is_selected'] == True and self.scvs[self.randomscv]['is_active'] == False):
+          x = random.randint(0, 70)
+          y = random.randint(0, 70)
+          target = (x, y)
+          self.scvs[self.randomscv]['is_active'] = True
+          self.scvs[self.randomscv]['is_selected'] = False
+#          self.randomscv = random.randint(0, self.numscvs-1)
+#          print(self.randomscv)
+#          print("here")
+          return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, target])
+        elif(self.scvs[self.randomscv]['is_active'] == True):
+#          print("Here")
+          self.scvs[self.randomscv]['is_active'] = False
+          self.scvs[self.randomscv]['is_selected'] = False
+          self.randomscv = random.randint(0, self.numscvs-1)
+          print(self.randomscv)
+#          print("here")
+#          return actions.FunctionCall(_NOOP, [])
+        else:
+          self.randomscv = random.randint(0, self.numscvs-1)
+#          print("HHHH")
+      else:
+        self.randomscv = random.randint(0, self.numscvs-1)
+    else:
+      pass
+    # if(self.numassigned == self.numscvs):
+      # for scv in self.scvs:
+        # scv['scv_assigned'] == False
+	
+    # for scv in self.scvs:
+      # if(scv['scv_assigned'] == False):
+        # if(scv['is_selected'] == False and scv['is_active'] == False):
+          # x = scv['pos']['x']
+          # y = scv['pos']['y']
+          # target = (x, y)
+          # scv['is_selected'] = True
+          # scv['is_active'] = False
+          # return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
+        # elif(scv['is_selected'] == True and scv['is_active'] == False):
+          # x = random.randint(0, 80)
+          # y = random.randint(0, 80)
+          # target = (x, y)
+# #          scv['is_active'] = True
+          # scv['is_selected'] == False
+          # return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, target])
+        # elif(scv['is_active'] == True):
+          # print("Here")
+          # scv['is_active'] == False
+          # scv['is_selected'] == False
+# #          continue
+		  
+          
+    print("commcount")
+    print(self.commcount)
     return actions.FunctionCall(_NOOP, [])
 
