@@ -36,12 +36,11 @@ _PLAYER_SELF = 1
 _NOT_QUEUED = [0]
 _QUEUED = [1]
 
-# Mineral states
+# States
 _ASSIGNED   = 0
 _SELECTED   = 1
 _MOVED      = 2
-
-_UNASSIGNED = 1
+_UNASSIGNED = 3
 
 class CollectMinerals(base_agent.BaseAgent):
   def __init__(self):
@@ -57,6 +56,7 @@ class CollectMinerals(base_agent.BaseAgent):
     super(CollectMinerals, self).reset()
     print("RESET")
     self.minerals = {}    # Found minerals - state and position info
+    self.found_minerals = {}    # Found minerals - state and position info
     self.scvs = {}        # Found scvs -  position info
     self.scv_states = {}  # SCV states - assigned mineral, position, state
     self.scv_keys = None  # List of SCV tags, to be iterated through
@@ -66,6 +66,7 @@ class CollectMinerals(base_agent.BaseAgent):
   # Find the locations of each mineral on screen
   # Save position and intialize each minerals state to unassigned
   def find_minerals(self,rObs):
+    self.found_minerals.clear()
     for unit in rObs['observation']['raw_data']['units']:
       if (unit['unit_type'] == _MINERAL_SHARD):
         x = unit['pos']['x']
@@ -74,10 +75,15 @@ class CollectMinerals(base_agent.BaseAgent):
         pos = {}
         pos['x'] = pt.x
         pos['y'] = pt.y
-        self.minerals[unit['tag']] = {'pos':pos, 'state':_UNASSIGNED}  
+        self.found_minerals[unit['tag']] = {'pos':pos}  
   
     print("MINERALS FOUND:")
-    print(json.dumps(self.minerals, indent=4, sort_keys=True))  
+    print(json.dumps(self.found_minerals, indent=4, sort_keys=True))  
+
+  def init_mineral_dict(self):
+    for key, val in self.found_minerals.items():
+      pos = val['pos']
+      self.minerals[key] = {'pos':pos, 'state':_UNASSIGNED}  
 
   # Find the locations of each SCV screen
   # Save position
@@ -93,13 +99,12 @@ class CollectMinerals(base_agent.BaseAgent):
         pos['y'] = pt.y
         self.scvs[unit['tag']] = {'pos': pos}
   
-  
   # Initialize dictionary to hold scv states
   # Fields: position, assigned_mineral, state
   def init_scv_dict(self):
     for key, val in self.scvs.items():
       pos = val['pos']
-      self.scv_states[key] = {'pos': pos, 'state': None, 'assigned_mineral': {'tag':None, 'x':None, 'y':None}}
+      self.scv_states[key] = {'pos': pos, 'state': _UNASSIGNED, 'assigned_mineral': {'tag':None, 'x':None, 'y':None}}
     #print(json.dumps(self.scv_states, indent=4, sort_keys=True))  
     # Get SCV keys in list
     self.scv_keys = list(self.scv_states.keys())
@@ -108,7 +113,13 @@ class CollectMinerals(base_agent.BaseAgent):
   def update_scv_loc(self,rObs):
     for key in self.scvs:
       self.scv_states[key]['pos'] = self.scvs[key]['pos']
- 
+
+  # Assign all unassigned SCVs
+  def assign_all(self): 
+      for scv_tag,val in self.scv_states.items():
+        if val['state'] == _UNASSIGNED:
+          self.assign(scv_tag)
+
   # Assign closest mineral to self.scv[tag]
   def assign(self,tag):
     print("ASSIGNING")
@@ -180,17 +191,28 @@ class CollectMinerals(base_agent.BaseAgent):
       print("INITIALIZING")
       self.find_scvs(rObs)
       self.find_minerals(rObs)    
+      self.init_mineral_dict()
       self.init_scv_dict()
-      # For every scv in self.scv_states, assign a mineral
-      for scv_tag in self.scv_states:
-        self.assign(scv_tag)
       self.done_initializing = True
       action = _NOOP
 
     # Main action loop
     else:
+      # Update SCV locations
       self.find_scvs(rObs)
       self.update_scv_loc(rObs)
+
+      # Update minerals
+      self.find_minerals(rObs)
+
+      # Check to see which SCVs have collected minerals
+      # Set their states to _UNASSIGNED
+      for key, val in self.scv_states.items():
+        tag_id = val['assigned_mineral']['tag']
+        if not tag_id in self.found_minerals:
+          self.scv_states[key]['state'] = _UNASSIGNED
+      self.assign_all() 
+      # Assign any unassigned SCVs
       
       # Iterate through all SCVs
       # If current SCV is selected, do not toggle SCV
@@ -228,14 +250,6 @@ class CollectMinerals(base_agent.BaseAgent):
         self.scv_states[scv_tag]['state'] = _MOVED
         action = _MOVE_SCREEN
       else:
-        scv_x = scv_val['pos']['x']
-        scv_y = scv_val['pos']['y']
-        min_x = scv_val['assigned_mineral']['x']
-        min_y = scv_val['assigned_mineral']['y']
-        if (scv_x == min_x and scv_y == min_y):
-          # SCV has reached mineral, so re-assign
-          print("COLLECTED MINERAL") 
-          self.assign(scv_tag)
         action = _NOOP    
 
     # Execute action
