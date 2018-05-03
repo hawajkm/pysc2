@@ -206,6 +206,8 @@ def run_loop(agents, env, max_frames=0, max_episodes=1):
           # Episode concluded
           total_episodes += 1
           timesteps = env.reset()
+          for a in agents:
+            a.reset()
 
         else:
         
