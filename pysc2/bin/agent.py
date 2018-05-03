@@ -77,7 +77,8 @@ def run_thread(agent_cls, map_name, visualize):
       visualize=visualize) as env:
     env = available_actions_printer.AvailableActionsPrinter(env)
     agent = agent_cls()
-    run_loop.run_loop([agent], env, FLAGS.max_agent_steps, FLAGS.max_episode_num, FLAGS.multiagent)
+    run_loop.run_loop([agent], env, map_name, FLAGS.max_agent_steps,
+                               FLAGS.max_episode_num, FLAGS.multiagent)
     if FLAGS.save_replay:
       env.save_replay(agent_cls.__name__)
 

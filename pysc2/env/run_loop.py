@@ -21,6 +21,7 @@ import types
 import re
 import json
 import inspect
+import os
 
 import time
 
@@ -181,11 +182,29 @@ def parse_observations(obj, depth = 0):
 # By  : Khalid Al-Hawaj
 # Date:  9 April 2018
 
-def run_loop(agents, env, max_frames=0, max_episodes=1, multiagent=''):
+import csv
+
+def run_loop(agents, env, map_name, max_frames=0, max_episodes=1, multiagent=''):
   """A run loop to have agents and an environment interact."""
-  total_frames = 0
+  total_frames   = 0
   total_episodes = 0
+  episode_frames = 0
   start_time = time.time()
+
+  # Load CSV files
+
+  results = {}
+
+  if os.path.isfile('results.csv'):
+    with open('results.csv', 'rb') as csvfile:
+      reader = csv.reader(csvfile)
+
+      # Get the header out
+      idx = 0
+      for row in reader:
+        if idx != 0:
+          results[row[0]] = row[1:]
+        idx += 1
 
   action_spec = env.action_spec()
   observation_spec = env.observation_spec()
@@ -203,8 +222,18 @@ def run_loop(agents, env, max_frames=0, max_episodes=1, multiagent=''):
 
         if timesteps[0].last():
 
+          # Book-keeping
+
+          if not map_name in results:
+            # Add empty list
+            results[map_name] = []
+
+          # We had this before :)
+          results[map_name].append(episode_frames)
+
           # Episode concluded
           total_episodes += 1
+          episode_frames  = 0
           timesteps = env.reset()
           for a in agents:
             a.reset()
@@ -213,7 +242,8 @@ def run_loop(agents, env, max_frames=0, max_episodes=1, multiagent=''):
         
           # Game on :)
 
-          total_frames += 1
+          total_frames   += 1
+          episode_frames += 1
 
           # Get raw observations
           rObs = [parse_observations(mObs) for mObs in env._env._obs]
@@ -275,12 +305,23 @@ def run_loop(agents, env, max_frames=0, max_episodes=1, multiagent=''):
 
           # Terminate when we reach maximum number of episodes
           if max_episodes and total_episodes >= max_episodes:
-            return
+            break
           elif max_frames and total_frames >= max_frames:
-            return
+            break
 
           timesteps = env.step(actions)
           time.sleep(0.2)
+
+        # Save the csv
+        with open('results.csv', 'w') as csvfile:
+          writer = csv.writer(csvfile)
+
+          writer.writerow(['map', 'results'])
+          for map_name in results:
+            row = [map_name]
+            row.extend(results[map_name])
+            writer.writerow(row)
+
 
   except KeyboardInterrupt:
     pass
