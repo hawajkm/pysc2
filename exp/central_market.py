@@ -3,111 +3,90 @@ import Queue
 import random
 import json
 
-def generate_data():
-  # Randomly generate a set of (x,y) locations for SCVs and minerals
-  scv_num  = 10
-  min_num  = 10
-  scvs     = {}
-  minerals = {}
+from pysc2.lib import parse_obs
 
-  for i in range(scv_num):
-    x = round(random.random() * 10,2)
-    y = round(random.random() * 10,2)
-    t = round(random.random() * 50 + 20,2)
-    scvs[i] = {'x':x , 'y':y,'tag':t}    
+class CentralMarket(object):
 
-  for i in range(min_num):
-    x = round(random.random() * 10,2)
-    y = round(random.random() * 10,2)
-    minerals[i] = {'x':x , 'y':y, 'p':0,'ID':i}
+  def __init__(self):
 
-  #scvs[0] = {'x':2 , 'y':4,'tag':35}
-  #scvs[1] = {'x':4 , 'y':4,'tag':53}    
-  #scvs[2] = {'x':12 , 'y':10,'tag':88}    
-  #minerals[0] = {'x':3 , 'y':6, 'p':0}
-  #minerals[2] = {'x':8 , 'y':8, 'p':0}
-  #minerals[1] = {'x':10 , 'y':10, 'p':0}
+    self.nothing = ':)'
 
-  return scvs, minerals
+  def plan(self, obs):
 
-# Initialize 2D list of weights
-# Rows = SCV ID
-# Cols = Mineral ID
-def init_weights(scvs,minerals):
-  num_scv = len(scvs)
-  num_min = len(minerals)
-  weights = []
-  
-  for i in range(num_scv):
-    temp = []
-    for j in range(num_min):
-      scv_x = scvs[i]['x']
-      scv_y = scvs[i]['y']
-      min_x = minerals[j]['x']
-      min_y = minerals[j]['y']
-      dist = pow(scv_x-min_x,2) + pow(scv_y-min_y,2)
-      w = 1/float(dist) 
-      temp.append(w)
-    weights.append(temp)
-    
-  return weights
+    # Helper functions
+    def get_pos(x):
+      return x['tag'], {'pos': [x['pos']['x'], x['pos']['y']]}
 
-def auction(scvs,minerals,weights):
-  # Initialize empty assignment dictionar S {mineral_id:scv_id}
-  S = {}
+    def dist(a, b):
+      return pow(a[0] - b[0], 2) + pow(a[1] - b[1], 2)
 
-  # Intialize queue to contain all bidders
-  q = Queue.Queue(maxsize=len(scvs))
+    # Get unit and stuff ...
+    raw_units    = parse_obs.get_units(obs, alliance = 1                  )
+    raw_minerals = parse_obs.get_units(obs, alliance = 3, unit_type = 1680)
 
-  for key in scvs:
-    print(key)
-    q.put(key)
+    # Lambda and stuff
+    units        = dict([get_pos(x) for x in raw_units])
+    minerals     = [get_pos(x) for x in raw_minerals]
 
-  while(not q.empty()):
-    i = q.get()  # Current SCV
-    print("Current SCV: ", i)
+    assignments  = {i: None for i in xrange(len(minerals))}
 
-    # Find mineral j that maximizes profit: weight_{ij} - p_j
-    w_i = weights[i] # All weights for current SCV i
-    print(w_i)
-    profit = [w_i[ind] - minerals[ind]['p'] for ind in range(len(w_i))]
-    print("profits for i: ", profit)
-    j = profit.index(max(profit)) # Index of mineral with maximum profit
-    v = profit[j]  # Profit of mineral[j]
-    print("v: ",v) 
-    
-    # Find second highest profit
-    del profit[j]  
-    w = max(profit) # Second highest profit
-    print("w: ",w)
+    # Needed states for auction
 
-    p_j = minerals[j]['p'] # Price of mineral with highest profit
-    if (not j in S) or (S[j] != i):
-      # Enqueue current owner of j into queue
-      if j in S:
-        curr_owner_id = S[j] 
-        q.put(curr_owner_id)
-      # SCV i now gets mineral j
-      S[j] = i
-      # Increase price of mineral j
-      minerals[j]['p'] = p_j + (v-w)
-      #print json.dumps(minerals, sort_keys=True, indent=4, separators=(',',': ')) 
+    # Calculate weights
+    for unit in units:
 
-  print("final:")
-  print(S)
-  
+      unit_pos = units[unit]['pos']
+      weights  = [(1 / dist(unit_pos, mineral)) for mineral in minerals]
 
-def main():
-  scvs, minerals = generate_data()
+      units[unit]['weights'] = weights
 
-  print json.dumps(scvs, sort_keys=True, indent=4, separators=(',',': ')) 
-  print json.dumps(minerals, sort_keys=True, indent=4, separators=(',',': ')) 
-  
-  weights = init_weights(scvs,minerals)
+    # Prices for the minerals
+    prices = [0 for _ in minerals]
 
-  print("Weights: ", weights)
+    # Intialize queue to contain all bidders
+    q = Queue.Queue(maxsize=len(scvs))
 
-  auction(scvs,minerals,weights)
+    for unit in units: q.put(unit)
 
-if __name__ == "__main__":
-  main()
+    # Auctioning
+    while(not q.empty()):
+
+      # Start with the head of the queue
+      bidder = q.get()
+
+      # Get weights
+      weights = units[bidder]['weights']
+
+      # Get most profitable mineral
+      profit      = [w - p for w, p in zip(weights, prices)]
+      max_profit  = max(profit)
+      mineral_idx = [i for i, x in enumerate(profit) if x == max_profit][0]
+
+      del profit[mineral_idx]
+      s_profit    = max(profit)
+      bid         = max_profit - second_profit
+
+      if   assignments[mineral_idx] == None:
+
+        assignments[mineral_idx]  = unit
+        prices[mineral_idx]      += bid
+
+      elif assignments[mineral_idx] != unit:
+
+        bastard = assignments[mineral_idx]
+        q.put(bastard)
+        assignments[mineral_idx] = unit
+        prices[mineral_idx]      += bid
+
+    # Parse results
+    actions = []
+    for mineral in assignments:
+
+      winner = assignments[mineral]
+
+      if winner != None:
+
+        actions.append([winner, minerals[mineral]])
+
+    # Done!
+    return actions
