@@ -181,7 +181,7 @@ def parse_observations(obj, depth = 0):
 # By  : Khalid Al-Hawaj
 # Date:  9 April 2018
 
-def run_loop(agents, env, max_frames=0, max_episodes=1):
+def run_loop(agents, env, max_frames=0, max_episodes=1, multiagent):
   """A run loop to have agents and an environment interact."""
   total_frames = 0
   total_episodes = 0
@@ -265,6 +265,9 @@ def run_loop(agents, env, max_frames=0, max_episodes=1):
             elif num_args == 3:
               action = agent.step(timestep, obs, game_info)
 
+            elif num_args == 4:
+              action = agent.step(timestep, obs, game_info, multiagent)
+
             else:
               raise TypeError
 
@@ -277,6 +280,7 @@ def run_loop(agents, env, max_frames=0, max_episodes=1):
             return
 
           timesteps = env.step(actions)
+          time.sleep(0.2)
 
   except KeyboardInterrupt:
     pass
