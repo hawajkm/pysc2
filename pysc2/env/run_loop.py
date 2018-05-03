@@ -231,6 +231,16 @@ def run_loop(agents, env, map_name, max_frames=0, max_episodes=1, multiagent='')
           # We had this before :)
           results[map_name].append(episode_frames)
 
+          # Save the csv
+          with open('results.csv', 'w') as csvfile:
+            writer = csv.writer(csvfile)
+
+            writer.writerow(['map', 'results'])
+            for map_name in results:
+              row = [map_name]
+              row.extend(results[map_name])
+              writer.writerow(row)
+
           # Episode concluded
           total_episodes += 1
           episode_frames  = 0
@@ -305,22 +315,12 @@ def run_loop(agents, env, map_name, max_frames=0, max_episodes=1, multiagent='')
 
           # Terminate when we reach maximum number of episodes
           if max_episodes and total_episodes >= max_episodes:
-            break
+            return
           elif max_frames and total_frames >= max_frames:
-            break
+            return
 
           timesteps = env.step(actions)
           time.sleep(0.2)
-
-        # Save the csv
-        with open('results.csv', 'w') as csvfile:
-          writer = csv.writer(csvfile)
-
-          writer.writerow(['map', 'results'])
-          for map_name in results:
-            row = [map_name]
-            row.extend(results[map_name])
-            writer.writerow(row)
 
 
   except KeyboardInterrupt:
