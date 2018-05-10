@@ -43,9 +43,7 @@ _ASSIGNED   = 0
 _SELECTED   = 1
 _MOVED      = 2
 
-_UNASSIGNED = 1from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+_UNASSIGNED = 1
 
 from pysc2.agents import base_agent
 from pysc2.lib import actions
@@ -104,7 +102,7 @@ class DecentralizedAgent(base_agent.BaseAgent):
     self.scvs = []
     self.scvbidlist = []
     self.assignmentlist = []
-	self.crystalassignstat = []
+    self.crystalassignstat = []
     self.crystalbids = {}
     self.numcrystals = 0
     self.numscvs = 0
@@ -112,6 +110,7 @@ class DecentralizedAgent(base_agent.BaseAgent):
     self.radius = 120
     self.randomscv = 0
     self.commcount = 0
+    self.equalcycles = 5
     self.done_initializing = False
     
   def find_minerals(self, nObs):
@@ -128,7 +127,7 @@ class DecentralizedAgent(base_agent.BaseAgent):
         
   def find_scvs(self, nObs):
     units = parse_obs.get_units(nObs, alliance = 1)
-    for unit in units
+    for unit in units:
       x = unit['pos']['x']
       y = unit['pos']['y']
       pt = self._translate_coord.world_to_screen(x, y)
@@ -144,7 +143,7 @@ class DecentralizedAgent(base_agent.BaseAgent):
     
 
   def crystals_near(self):
-    for scv in self.scvs
+    for scv in self.scvs:
       for crystal in self.crystals:
         if(crystal['crystal_assigned'] ==  True):
           pass
@@ -159,14 +158,18 @@ class DecentralizedAgent(base_agent.BaseAgent):
           else:
             pass
               
-  
-  def initcrystalbids(self)
+  def initialize_scvbidlist(self):
+    self.scvbidlist = []
+    for scvcount in range(0, self.numscvs):
+      self.scvbidlist.append([])
+      
+  def initcrystalbids(self):
     for crystal in self.crystals:
-      crystalbids[crystal['crystal_tag']] = []
+      self.crystalbids[crystal['crystal_tag']] = []
   
   def createinitialbidlist(self):
+    s = 0
     for scv in self.scvs:
-      s = 0
       if(scv['is_active'] == True):
         pass
       else:
@@ -182,7 +185,7 @@ class DecentralizedAgent(base_agent.BaseAgent):
             if dist <= self.radius:
               value =  1/dist
               profit = 1/dist
-              bid = {'crystal' : crystal['crystal_tag'], 'profit' : profit, 'value' : value, 'bid', : 0, 'scv' : scv['scv_tag'], 'crystal_assigned' : crystal['crystal_assigned'], 'crystalpos' : crystal['pos'], 'scvpos' : scv['pos'], 'is_selected' : scv['is_selected'], 'scv_active' : scv['is_active'], 'crystalprice' : crystal[crystalprice]}     
+              bid = {'crystal' : crystal['crystal_tag'], 'profit' : profit, 'value' : value, 'bid' : 0, 'scv' : scv['scv_tag'], 'crystal_assigned' : crystal['crystal_assigned'], 'crystalpos' : crystal['pos'], 'scvpos' : scv['pos'], 'is_selected' : scv['is_selected'], 'scv_active' : scv['is_active'], 'crystalprice' : crystal['crystalprice']}     
               self.scvbidlist[s].append(bid)
       s = s + 1                
               
@@ -217,41 +220,54 @@ class DecentralizedAgent(base_agent.BaseAgent):
         
     
   def market(self):
-  
-    while(iterations < equalcycles):
-    
+    iterations = 0
+    while(iterations < self.equalcycles):
+      self.sortbidlist()
       self.updatescvprofit()
       self.sortbidlist()
       self.updatescvbids()
-    
+      self.sortbidlist()
+      print(self.scvbidlist)
+      self.initcrystalbids()
+      
       for scvbids in self.scvbidlist:
         crystalbid = {'scv_tag' : scvbids[0]['scv'], 'bid' : scvbids[0]['bid']}
-        crystalbids[scvbids[0]['crystal']].append(crystalbid)
+        self.crystalbids[scvbids[0]['crystal']].append(crystalbid)
       
-      for crystaltag in crystalbids.keys()
-        crystalbids[crystaltag] = sorted(crystalbids[crystaltag], key = itemgetter('bid'), reverse = True)
+      for crystaltag in self.crystalbids.keys():
+        self.crystalbids[crystaltag] = sorted(self.crystalbids[crystaltag], key = itemgetter('bid'), reverse = True)
     
 #    for crystaltag in crystalbids.keys():
 #      for bid in crystalbids[crystaltag]:
 #        if (bid['bid'] == 0):
 #          zerocount = zerocount + 1
 
-      for crystaltag in crystalbids.keys():
-        for scvbids in self.scvbidlist:
-          for bid in scvbids:
-            if(bid('crystal') == crystaltag):
+      # for crystaltag in crystalbids.keys():
+        # for scvbids in self.scvbidlist:
+          # for bid in scvbids:
+            # if(bid('crystal') == crystaltag):
               
-      
+      currentprices = {}
       for scvbids in self.scvbidlist:
         for bid in scvbids:
-          for crystaltag in crystalbids.keys():
+          for crystaltag in self.crystalbids.keys():
+#            print(self.scvbidlist)
             if(bid['crystal'] == crystaltag):
-              bid['crystalprice'] = crystalbids[crystaltag][0]['bid']
-      
+              bid['crystalprice'] = bid['crystalprice'] + self.crystalbids[crystaltag][0]['bid']
+              currentprices[crystaltag] = bid['crystalprice']
+              
       if(runcount == 0):
         pass
       else:
-        
+        for crystaltag in self.crystalbids.keys():
+          if(savedprices[crystaltag] == currentprices[crystaltag]):
+            tempeqcount = tempeqcount + 1
+          else:
+            pass
+        if(tempeqcount == len(currentprices)):
+          iterations = iterations + 1
+        else:
+          iterations = 0
       
       savedprices = {}
       for scvbids in self.scvbidlist:
@@ -280,10 +296,61 @@ class DecentralizedAgent(base_agent.BaseAgent):
         # s = s + 1
       
       
-  def assign(self):
-    i = 0
-    for scvbids in self.scvbidlist
-      if(scvbids[i]['scv_active'] == True):
-        pass
-      else:
-        
+  # def assign(self):
+    # i = 0
+    # for scvbids in self.scvbidlist
+      # if(scvbids[i]['scv_active'] == True):
+        # pass
+      # else:
+
+  def step(self,oObs, nObs, game_info):
+    super(DecentralizedAgent,self).step(oObs)
+
+   # Get game_info
+    _map_size     = game_info['map_size'    ]
+    _screen_size  = game_info['screen_size' ]
+    _minimap_size = game_info['minimap_size']
+    _camera_width = game_info['camera_width']
+    _camera_pos   = game_info['camera_pos'  ]
+
+    # Update translate_coord
+    if not hasattr(self, '_translate_coord'):
+      self._translate_coord = translate_coord.translate_coord()
+
+    self._translate_coord.update(_map_size   , _minimap_size,
+                                 _screen_size, _camera_width,
+                                 _camera_pos ,              )
+
+    # Initialize
+    if not self.done_initializing:
+      print("INITIALIZING")
+      self.find_scvs(nObs)
+      self.find_minerals(nObs)
+      self.find_counts()
+#      self.createinitialbidlist()
+#      self.initcrystalbids()
+      self.done_initializing = True
+      action = _NOOP
+      return actions.FunctionCall(_NOOP, [])
+	  
+    # Main action loop
+    else:
+      # self.find_counts()
+      # self.initialize_crystalbidlist()
+      # self.updateposition(nObs)
+      # self.find_minerals(nObs)
+      # self.find_counts()
+      # self.initialize_crystalbidlist()
+      # self.createbidlist()
+      self.initcrystalbids()
+      self.initialize_scvbidlist()
+      self.createinitialbidlist()
+      self.market()
+      exit()
+	  
+	  
+      # for crystalbid in self.crystalbidlist:
+        # if(len(crystalbid) == 1):
+          # pass
+        # else:
+          # self.commcount = self.commcount + len(crystalbid)      
