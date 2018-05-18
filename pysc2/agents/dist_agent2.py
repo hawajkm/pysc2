@@ -227,16 +227,16 @@ class DistributedAgent(base_agent.BaseAgent):
 #        print("scv assigned")
 #      if(crystal['crystal_assigned'] == True):
 #        pass
-#      elif(scv['is_active'] == True): #put back in as elif
-#        continue
-      elif(scv['is_active_rwalk'] == True):
+      elif(scv['is_active'] == True): #put back in as elif
         continue
+#      elif(scv['is_active_rwalk'] == True):
+#        continue
       else:
         c = 0
 #        print("Checked")
         for crystal in self.crystals:
-          if(crystal['crystal_assigned'] == True):
-            continue
+#          if(crystal['crystal_assigned'] == True):
+#            continue
           if(True):
 #            print("right here")
             self.updateposition(nObs)
@@ -384,7 +384,7 @@ class DistributedAgent(base_agent.BaseAgent):
   def remove_false_assignments(self):
     for scv in self.scvs:
       if(len(self.assignmentlist) == 0):
-        scv['is_assigned'] = False
+        scv['scv_assigned'] = False
         scv['is_active'] = False
         scv['is_selected'] = False
       else:
@@ -396,10 +396,37 @@ class DistributedAgent(base_agent.BaseAgent):
             not_in_count = not_in_count + 1
       
         if(not_in_count == len(self.assignmentlist)):
-          scv['is_assigned'] = False
+          scv['scv_assigned'] = False
           scv['is_active'] = False
           scv['is_selected'] = False
+  def remove_outdated_assignments(self, nObs):
+    self.updateposition(nObs)
+    a = 0
+    for assignment in self.assignmentlist:
+      if(len(self.assignmentlist) == 0):
+        break
+      for scv in self.scvs:
+        if(assignment['scv'] == scv['scv_tag']):
+          x_dist = assignment['crystalpos']['x'] - scv['pos']['x']
+          y_dist = assignment['crystalpos']['y'] - scv['pos']['y']
+          dist = x_dist * x_dist + y_dist * y_dist
+          dist = math.sqrt(dist)
+          if(dist > self.radius):
+            scv['is_active'] = False
+            scv['scv_assigned'] = False
+            scv['is_selected'] = False
+            if(len(self.assignmentlist) != 0):
+              self.assignmentlist.pop(a)
+          if(assignment['bid'] > dist):
+            scv['is_active'] = False
+            scv['scv_assigned'] = False
+            scv['is_selected'] = False
+            if(len(self.assignmentlist) != 0 and (a < len(self.assignmentlist))):
+              self.assignmentlist.pop(a)
+                      
+      a = a + 1
           
+              
   def step(self,oObs, nObs, game_info):
     super(DistributedAgent,self).step(oObs)
 
@@ -477,6 +504,7 @@ class DistributedAgent(base_agent.BaseAgent):
       self.remove_misassigned_scvs()
       self.remove_duplicate_assignments()
       self.remove_false_assignments()
+      self.remove_outdated_assignments(nObs)
       assignment_count = 0
       for assignmentmade in self.assignmentlist:
         if(assignmentmade['is_selected'] == False and assignmentmade['is_active'] == False):
@@ -506,7 +534,7 @@ class DistributedAgent(base_agent.BaseAgent):
           for scv in self.scvs:
             if(scv['scv_tag'] == assignmentmade['scv']):
               scv['is_active'] = True
-              scv['is_selected_rwalk'] = False
+#              scv['is_selected_rwalk'] = False
               scv['is_active_rwalk'] = False
   #        print("scvs")
   #        print(self.scvs)
@@ -557,6 +585,7 @@ class DistributedAgent(base_agent.BaseAgent):
       self.remove_misassigned_scvs()
       self.remove_duplicate_assignments()
       self.remove_false_assignments()
+      self.remove_outdated_assignments(nObs)
       for scv in self.scvs:
         print("scv tag")
         print(scv['scv_tag'])
@@ -582,7 +611,7 @@ class DistributedAgent(base_agent.BaseAgent):
             if(scv['is_active'] == True):
               continue
             if(True):
-              if(scv['is_selected_rwalk'] == False and scv['is_active_rwalk'] == False):
+              if(scv['is_selected_rwalk'] == False):
   #            if(scv['is_selected'] == False):
                 x = scv['pos']['x']
                 y = scv['pos']['y']
