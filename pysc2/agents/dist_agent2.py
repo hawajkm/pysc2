@@ -159,7 +159,7 @@ class DistributedAgent(base_agent.BaseAgent):
       pos = {}
       pos['x'] = pt.x
       pos['y'] = pt.y
-      scv = {'scv_tag' : unit['tag'], 'pos' : pos, 'scv_assigned' : False, 'is_active': False, 'is_active_rwalk' : False, 'is_selected' : False, 'rwalktarg' : (0, 0), 'rwalkcount' : 0}
+      scv = {'scv_tag' : unit['tag'], 'pos' : pos, 'scv_assigned' : False, 'is_active': False, 'is_active_rwalk' : False, 'is_selected' : False, 'is_selected_rwalk' : False, 'rwalktarg' : (0, 0), 'rwalkcount' : 0}
       self.scvs.append(scv)
   
   def find_initial_counts(self):
@@ -229,14 +229,14 @@ class DistributedAgent(base_agent.BaseAgent):
 #        pass
 #      elif(scv['is_active'] == True): #put back in as elif
 #        continue
-#      elif(scv['is_active_rwalk'] == True):
-#        continue
+      elif(scv['is_active_rwalk'] == True):
+        continue
       else:
         c = 0
 #        print("Checked")
         for crystal in self.crystals:
-#          if(crystal['crystal_assigned'] == True):
-#            continue
+          if(crystal['crystal_assigned'] == True):
+            continue
           if(True):
 #            print("right here")
             self.updateposition(nObs)
@@ -247,7 +247,7 @@ class DistributedAgent(base_agent.BaseAgent):
             bid = {}
             if dist <= self.radius:
 #              print("right here")
-              bid = {'crystal' : crystal['crystal_tag'], 'bid' : dist, 'scv' : scv['scv_tag'], 'crystal_assigned' : crystal['crystal_assigned'], 'scv_assigned' : scv['scv_assigned'], 'crystalpos' : crystal['pos'], 'scvpos' : scv['pos'], 'is_selected' : scv['is_selected'], 'is_active' : scv['is_active'], 'is_active_rwalk' : scv['is_active_rwalk']}
+              bid = {'crystal' : crystal['crystal_tag'], 'bid' : dist, 'scv' : scv['scv_tag'], 'crystal_assigned' : crystal['crystal_assigned'], 'scv_assigned' : scv['scv_assigned'], 'crystalpos' : crystal['pos'], 'scvpos' : scv['pos'], 'is_selected' : scv['is_selected'], 'is_selected_rwalk' : scv['is_selected_rwalk'], 'is_active' : scv['is_active'], 'is_active_rwalk' : scv['is_active_rwalk']}
               self.crystalbidlist[c].append(bid)
           c = c + 1
 
@@ -265,7 +265,7 @@ class DistributedAgent(base_agent.BaseAgent):
         if(crystalbid[0]['scv_assigned'] == True):
           continue
         assignment = {}
-        assignment = {'scv' : crystalbid[0]['scv'], 'crystal' : crystalbid[0]['crystal'], 'bid' : crystalbid[0]['bid'], 'crystalpos' : crystalbid[0]['crystalpos'], 'scvpos' : crystalbid[0]['scvpos'], 'is_selected' : crystalbid[0]['is_selected'], 'is_active' : crystalbid[0]['is_active'], 'is_active_rwalk' : crystalbid[0]['is_active_rwalk']}
+        assignment = {'scv' : crystalbid[0]['scv'], 'crystal' : crystalbid[0]['crystal'], 'bid' : crystalbid[0]['bid'], 'crystalpos' : crystalbid[0]['crystalpos'], 'scvpos' : crystalbid[0]['scvpos'], 'is_selected' : crystalbid[0]['is_selected'], 'is_selected_rwalk' : crystalbid[0]['is_selected_rwalk'], 'is_active' : crystalbid[0]['is_active'], 'is_active_rwalk' : crystalbid[0]['is_active_rwalk']}
         self.assignmentlist.append(assignment)
         crystalbid[0]['crystal_assigned'] = True
         self.numassigned = self.numassigned + 1
@@ -308,7 +308,7 @@ class DistributedAgent(base_agent.BaseAgent):
             if(numg == len(crystalbid) - 1):
               assignment = {}
 #              assignment = {'scv' : crystalbid[i]['scv'], 'crystal' : crystalbid[i]['crystal'], 'bid' : crystalbid[i]['bid'], 'crystalpos' : crystalbid[i]['crystalpos'], 'scvpos' : crystalbid[i]['scvpos'], 'is_selected' : crystalbid[i]['is_selected'], 'is_active' : crystalbid[i]['is_active']}
-              assignment = {'scv' : crystalbid[i]['scv'], 'crystal' : crystalbid[i]['crystal'], 'bid' : crystalbid[i]['bid'], 'crystalpos' : crystalbid[i]['crystalpos'], 'scvpos' : crystalbid[i]['scvpos'], 'is_selected' : crystalbid[i]['is_selected'], 'is_active' : crystalbid[i]['is_active'], 'is_active_rwalk' : crystalbid[i]['is_active_rwalk']}
+              assignment = {'scv' : crystalbid[i]['scv'], 'crystal' : crystalbid[i]['crystal'], 'bid' : crystalbid[i]['bid'], 'crystalpos' : crystalbid[i]['crystalpos'], 'scvpos' : crystalbid[i]['scvpos'], 'is_selected' : crystalbid[i]['is_selected'], 'is_selected_rwalk' : crystalbid[i]['is_selected_rwalk'], 'is_active' : crystalbid[i]['is_active'], 'is_active_rwalk' : crystalbid[i]['is_active_rwalk']}
               self.assignmentlist.append(assignment)
               crystalbid[i]['crystal_assigned'] = True
               self.numassigned = self.numassigned + 1
@@ -360,6 +360,7 @@ class DistributedAgent(base_agent.BaseAgent):
               scv['scv_assigned'] = False
           self.assignmentlist.pop(a)
       a = a + 1
+      
   def remove_duplicate_assignments(self):
     a = 0
     for assignment in self.assignmentlist:
@@ -380,6 +381,24 @@ class DistributedAgent(base_agent.BaseAgent):
                 scv['is_selected'] = False
             self.assignmentlist.pop(a)
       a = a + 1
+  def remove_false_assignments(self):
+    for scv in self.scvs:
+      if(len(self.assignmentlist) == 0):
+        scv['is_assigned'] = False
+        scv['is_active'] = False
+        scv['is_selected'] = False
+      else:
+        not_in_count = 0
+        for assignment in self.assignmentlist:
+          if(assignment['scv'] == scv['scv_tag']):
+            continue
+          else:
+            not_in_count = not_in_count + 1
+      
+        if(not_in_count == len(self.assignmentlist)):
+          scv['is_assigned'] = False
+          scv['is_active'] = False
+          scv['is_selected'] = False
           
   def step(self,oObs, nObs, game_info):
     super(DistributedAgent,self).step(oObs)
@@ -427,14 +446,16 @@ class DistributedAgent(base_agent.BaseAgent):
       self.updateposition(nObs)
       self.update_crystals(nObs)
       self.update_collected_crystals()
-#      print("initial crystal list length")
-#      print(len(self.initial_crystal_list))
-#      print("current crystals list length")
-#      print(len(self.crystals))
-#      print("collected crystals length")
-#      print(len(self.collected_crystals))
-#      print("assignment list")
-#      print(self.assignmentlist)
+      print("initial crystal list length")
+      print(len(self.initial_crystal_list))
+      print("current crystals list length")
+      print(len(self.crystals))
+      print("collected crystals length")
+      print(len(self.collected_crystals))
+      print("assignment list")
+      print(self.assignmentlist)
+      print("length of assignment list")
+      print(len(self.assignmentlist))
       self.update_crystal_count()
       self.find_num_collected()
       self.initialize_crystalbidlist()
@@ -455,6 +476,7 @@ class DistributedAgent(base_agent.BaseAgent):
       self.assign()
       self.remove_misassigned_scvs()
       self.remove_duplicate_assignments()
+      self.remove_false_assignments()
       assignment_count = 0
       for assignmentmade in self.assignmentlist:
         if(assignmentmade['is_selected'] == False and assignmentmade['is_active'] == False):
@@ -464,10 +486,14 @@ class DistributedAgent(base_agent.BaseAgent):
           target = (x, y)
   #        print(self.scvs)
           assignmentmade['is_selected'] = True
+          assignmentmade['is_selected_rwalk'] - False
+          assignmentmade['is_active_rwalk'] = False
   #        assignmentmade['is_active'] = False
           for scv in self.scvs:
             if(scv['scv_tag'] == assignmentmade['scv']):
               scv['is_selected'] = True
+              scv['is_selected_rwalk'] = False
+              scv['is_active_rwalk'] = False
   #            scv['is_active'] = False
           return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
         elif(assignmentmade['is_selected'] == True and assignmentmade['is_active'] == False):
@@ -475,9 +501,13 @@ class DistributedAgent(base_agent.BaseAgent):
           y = assignmentmade['crystalpos']['y']
           target = (x, y)
           assignmentmade['is_active'] = True
+          assignmentmade['is_selected_rwalk'] = False
+          assignmentmade['is_active_rwalk'] = False
           for scv in self.scvs:
             if(scv['scv_tag'] == assignmentmade['scv']):
               scv['is_active'] = True
+              scv['is_selected_rwalk'] = False
+              scv['is_active_rwalk'] = False
   #        print("scvs")
   #        print(self.scvs)
           return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, target])
@@ -488,6 +518,7 @@ class DistributedAgent(base_agent.BaseAgent):
 #              print("in here")
               assignmentmade['is_active'] = False
               assignmentmade['is_selected'] = False
+              assignmentmade['is_assigned'] = False
               for scv in self.scvs:
                 if(scv['scv_tag'] == assignmentmade['scv']):
                   scv['scv_assigned'] = False
@@ -523,37 +554,43 @@ class DistributedAgent(base_agent.BaseAgent):
 #      print(self.numcollected)
 #      print("number of assignments completed")
 #      print(self.new_assignment_count)
+      self.remove_misassigned_scvs()
+      self.remove_duplicate_assignments()
+      self.remove_false_assignments()
       for scv in self.scvs:
-#        print("scv tag")
-#        print(scv['scv_tag'])
-#        print("scv active status")
-#        print(scv['is_active'])
-#        print("scv selection status")
-#        print(scv['is_selected'])
-#        print("scv assignment status")
-#        print(scv['scv_assigned'])
-#        print("scv position")
-#        print(scv['pos'])
-#        print("scv random target")
-#        print(scv['rwalktarg'])
+        print("scv tag")
+        print(scv['scv_tag'])
+        print("scv active status")
+        print(scv['is_active'])
+        print("scv selection status")
+        print(scv['is_selected'])
+        print("scv assignment status")
+        print(scv['scv_assigned'])
+        print("scv position")
+        print(scv['pos'])
+        print("scv random target")
+        print(scv['rwalktarg'])
+        print("scv rwalk status")
+        print(scv['is_active_rwalk'])
+      if(True):
         if(self.numcollected < self.initial_crystal_count):
           for scv in self.scvs:
   #          print(self.scvs)
-#            if(scv['scv_assigned'] == True):
+            if(scv['scv_assigned'] == True):
   #            pass
-#              continue
+              continue
             if(scv['is_active'] == True):
               continue
             if(True):
-              if(scv['is_selected'] == False and scv['is_active_rwalk'] == False):
+              if(scv['is_selected_rwalk'] == False and scv['is_active_rwalk'] == False):
   #            if(scv['is_selected'] == False):
                 x = scv['pos']['x']
                 y = scv['pos']['y']
                 target = (x, y)
-                scv['is_selected'] = True
+                scv['is_selected_rwalk'] = True
   #              scv['is_active'] = False
                 return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
-              elif(scv['is_selected'] == True and scv['is_active_rwalk'] == False):
+              elif(scv['is_selected_rwalk'] == True and scv['is_active_rwalk'] == False):
                 x = round(random.uniform(22.3125, 43.6874), 4)
                 y = round(random.uniform(20.3125, 35.6874), 4)
                 rtarg = self._translate_coord.world_to_screen(x, y)
@@ -584,7 +621,7 @@ class DistributedAgent(base_agent.BaseAgent):
                   
                   if(((ax <= scv['pos']['x'] <= bx) and (ay <= scv['pos']['y'] <= by)) == True):
                     scv['is_active_rwalk'] = False
-                    scv['is_selected'] = False
+                    scv['is_selected_rwalk'] = False
                 else:
 #                  print("herehere")
                   ax = (scv['rwalktarg'][0]) - 8
@@ -592,16 +629,22 @@ class DistributedAgent(base_agent.BaseAgent):
                   ay = (scv['rwalktarg'][1]) - 8
                   by = (scv['rwalktarg'][1]) + 8
                   scv['rwalkcount'] = scv['rwalkcount'] + 1
-  #                self.updateposition(nObs)
+                  self.updateposition(nObs)
                   
-                  if(((ax <= scv['pos']['x'] <= bx) and (ay <= scv['pos']['y'] <= by)) or (scv['rwalkcount'] % 8 == 0)):
+                  if(((ax <= scv['pos']['x'] <= bx) and (ay <= scv['pos']['y'] <= by)) or (scv['rwalkcount'] % 2 == 0)):
   #                if(((ax <= scv['pos']['x'] <= bx) and (ay <= scv['pos']['y'] <= by))):                
                     scv['is_active_rwalk'] = False
-                    scv['is_selected'] = False
+                    scv['is_selected_rwalk'] = False
+                    scv['is_active_rwalk'] = False
+                    scv['is_assigned'] = False
+                    scv['is_active'] = False
                     for assign in self.assignmentlist:
                       if(assign['scv'] == scv['scv_tag']):
                         assign['is_active_rwalk'] = False
                         assign['is_selected'] = False
+                        assign['scv_assigned'] = False
+                        assign['is_active'] = False
+                        assign['is_selected_rwalk'] = False
                         
       # if(self.reset_state_count % 10 == 0):              
         # for scv in self.scvs:
