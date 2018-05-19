@@ -516,15 +516,25 @@ class DistributedAgent(base_agent.BaseAgent):
       self.remove_false_assignments()
       self.remove_outdated_assignments(nObs)
       assignment_count = 0
+      
       for assignmentmade in self.assignmentlist:
-        if(assignmentmade['is_selected'] == False and assignmentmade['is_active'] == False):
+        if(assignmentmade['is_active_rwalk'] == True):
+          assignmentmade['is_active_rwalk'] = False
+          assignmentmade['is_selected_rwalk'] = False
+          
+          for scv in self.scvs:
+            if(scv['scv_tag'] == assignmentmade['scv']):
+              scv['is_selected_rwalk'] = False
+              scv['is_active_rwalk'] = False
+          
+        elif(assignmentmade['is_selected'] == False and assignmentmade['is_active'] == False):
   #      if(assignmentmade['is_selected'] == False):
           x = assignmentmade['scvpos']['x']
           y = assignmentmade['scvpos']['y']
           target = (x, y)
   #        print(self.scvs)
           assignmentmade['is_selected'] = True
-          assignmentmade['is_selected_rwalk'] - False
+          assignmentmade['is_selected_rwalk'] = False
           assignmentmade['is_active_rwalk'] = False
   #        assignmentmade['is_active'] = False
           for scv in self.scvs:
@@ -557,11 +567,15 @@ class DistributedAgent(base_agent.BaseAgent):
               assignmentmade['is_active'] = False
               assignmentmade['is_selected'] = False
               assignmentmade['is_assigned'] = False
+              assignmentmade['is_selected_rwalk'] = False
+              assignmentmade['is_active_rwalk'] = False
               for scv in self.scvs:
                 if(scv['scv_tag'] == assignmentmade['scv']):
                   scv['scv_assigned'] = False
                   scv['is_active'] = False
                   scv['is_selected'] = False
+                  scv['is_selected_rwalk'] = False
+                  scv['is_active_rwalk'] = False
               self.assignmentlist.pop(assignment_count)
               self.new_assignment_count = self.new_assignment_count + 1
         assignment_count = assignment_count + 1
@@ -623,13 +637,16 @@ class DistributedAgent(base_agent.BaseAgent):
             if(scv['is_active'] == True):
               continue
             if(True):
-              if(scv['is_selected_rwalk'] == False):
+              if(scv['is_selected_rwalk'] == False and scv['is_active_rwalk'] == False):
   #            if(scv['is_selected'] == False):
                 x = scv['pos']['x']
                 y = scv['pos']['y']
                 target = (x, y)
                 scv['is_selected_rwalk'] = True
-  #              scv['is_active'] = False
+                for assignment in self.assignmentlist:
+                  if(assignment['scv'] == scv['scv_tag']):
+                    assignment['is_selected_rwalk'] = True
+                
                 return actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, target])
               elif(scv['is_selected_rwalk'] == True and scv['is_active_rwalk'] == False):
                 x = round(random.uniform(22.3125, 43.6874), 4)
@@ -644,8 +661,13 @@ class DistributedAgent(base_agent.BaseAgent):
   #                self.rwalktargs = (x, y)
                 else:
                   scv['rwalktarg'] = rtarg
-                scv['is_active_rwalk'] = True
-  #              scv['is_selected'] = False
+                  scv['is_active_rwalk'] = True
+#                scv['is_selected_rwalk'] = False
+                for assignment in self.assignmentlist:
+                  if(assignment['scv'] == scv['scv_tag']):
+                    assignment['is_active_rwalk'] = True
+#                    assignment['is_selected_rwalk'] = False
+                
                 if(self.numscvs == 1):
                   return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, scv['rwalktarg']])
                 else:
@@ -664,7 +686,7 @@ class DistributedAgent(base_agent.BaseAgent):
                     scv['is_active_rwalk'] = False
                     scv['is_selected_rwalk'] = False
                 else:
-#                  print("herehere")
+                  print("herehere")
                   ax = (scv['rwalktarg'][0]) - 8
                   bx = (scv['rwalktarg'][0]) + 8
                   ay = (scv['rwalktarg'][1]) - 8
@@ -672,7 +694,7 @@ class DistributedAgent(base_agent.BaseAgent):
                   scv['rwalkcount'] = scv['rwalkcount'] + 1
                   self.updateposition(nObs)
                   
-                  if(((ax <= scv['pos']['x'] <= bx) and (ay <= scv['pos']['y'] <= by)) or (scv['rwalkcount'] % 2 == 0)):
+                  if(((ax <= scv['pos']['x'] <= bx) and (ay <= scv['pos']['y'] <= by)) or (scv['rwalkcount'] % 1 == 0)):
   #                if(((ax <= scv['pos']['x'] <= bx) and (ay <= scv['pos']['y'] <= by))):                
                     scv['is_active_rwalk'] = False
                     scv['is_selected_rwalk'] = False
