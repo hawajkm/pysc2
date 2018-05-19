@@ -627,17 +627,41 @@ class DistributedAgent(base_agent.BaseAgent):
         print(scv['is_active_rwalk'])
         print("rwalk selection")
         print(scv['is_selected_rwalk'])
+        
       if(True):
         if(self.numcollected < self.initial_crystal_count):
           for scv in self.scvs:
   #          print(self.scvs)
             if(scv['scv_assigned'] == True):
-  #            pass
               continue
             if(scv['is_active'] == True):
               continue
             if(True):
-              if(scv['is_selected_rwalk'] == False and scv['is_active_rwalk'] == False):
+            
+            
+              if(scv['is_active_rwalk'] == True):
+                ax = (scv['rwalktarg'][0]) - 8
+                bx = (scv['rwalktarg'][0]) + 8
+                ay = (scv['rwalktarg'][1]) - 8
+                by = (scv['rwalktarg'][1]) + 8
+                if(((ax <= scv['pos']['x'] <= bx) and (ay <= scv['pos']['y'] <= by)) == True):
+                  scv['is_active_rwalk'] = False
+                  scv['is_selected_rwalk'] = False
+                  scv['is_active_rwalk'] = False
+                  scv['scv_assigned'] = False
+                  scv['is_active'] = False
+                  for assign in self.assignmentlist:
+                    if(assign['scv'] == scv['scv_tag']):
+                      assign['is_active_rwalk'] = False
+                      assign['is_selected'] = False
+                      assign['scv_assigned'] = False
+                      assign['is_active'] = False
+                      assign['is_selected_rwalk'] = False
+                  continue
+                else:
+                  continue                    
+                      
+              elif(scv['is_selected_rwalk'] == False and scv['is_active_rwalk'] == False):
   #            if(scv['is_selected'] == False):
                 x = scv['pos']['x']
                 y = scv['pos']['y']
@@ -672,42 +696,10 @@ class DistributedAgent(base_agent.BaseAgent):
                   return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, scv['rwalktarg']])
                 else:
                   return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, scv['rwalktarg']])
-              elif(scv['is_active_rwalk'] == True):
-                if(self.numscvs == 1):
-#                  print("herehere")
-                  ax = (scv['rwalktarg'][0]) - 8
-                  bx = (scv['rwalktarg'][0]) + 8
-                  ay = (scv['rwalktarg'][1]) - 8
-                  by = (scv['rwalktarg'][1]) + 8
-                  
-                  self.updateposition(nObs)
-                  
-                  if(((ax <= scv['pos']['x'] <= bx) and (ay <= scv['pos']['y'] <= by)) == True):
-                    scv['is_active_rwalk'] = False
-                    scv['is_selected_rwalk'] = False
-                else:
-                  print("herehere")
-                  ax = (scv['rwalktarg'][0]) - 8
-                  bx = (scv['rwalktarg'][0]) + 8
-                  ay = (scv['rwalktarg'][1]) - 8
-                  by = (scv['rwalktarg'][1]) + 8
-                  scv['rwalkcount'] = scv['rwalkcount'] + 1
-                  self.updateposition(nObs)
-                  
-                  if(((ax <= scv['pos']['x'] <= bx) and (ay <= scv['pos']['y'] <= by)) or (scv['rwalkcount'] % 1 == 0)):
-  #                if(((ax <= scv['pos']['x'] <= bx) and (ay <= scv['pos']['y'] <= by))):                
-                    scv['is_active_rwalk'] = False
-                    scv['is_selected_rwalk'] = False
-                    scv['is_active_rwalk'] = False
-                    scv['scv_assigned'] = False
-                    scv['is_active'] = False
-                    for assign in self.assignmentlist:
-                      if(assign['scv'] == scv['scv_tag']):
-                        assign['is_active_rwalk'] = False
-                        assign['is_selected'] = False
-                        assign['scv_assigned'] = False
-                        assign['is_active'] = False
-                        assign['is_selected_rwalk'] = False
+                    
+              else:
+                continue
+
                         
       # if(self.reset_state_count % 10 == 0):              
         # for scv in self.scvs:
