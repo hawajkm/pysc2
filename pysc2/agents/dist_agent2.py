@@ -110,6 +110,7 @@ class DistributedAgent(base_agent.BaseAgent):
     self.assignmentlist = []
     self.initial_crystal_list = []
     self.collected_crystals = []
+    self.position_dict = {}
     self.initial_crystal_count = 0
     self.numcrystals = 0	  # Number of crystals
     self.reset_state_count = 0
@@ -426,7 +427,10 @@ class DistributedAgent(base_agent.BaseAgent):
                       
       a = a + 1
           
-              
+  def init_position_dict(self):
+    for scv in self.scvs:
+      self.position_dict['scv_tag'] = []
+      
   def step(self,oObs, nObs, game_info):
     super(DistributedAgent,self).step(oObs)
 
@@ -471,6 +475,12 @@ class DistributedAgent(base_agent.BaseAgent):
       # self.find_counts()
       # self.initialize_crystalbidlist()
       self.updateposition(nObs)
+      
+      # for scv in self.scvs:
+        # self.position_dict[scv['scv_tag']].append(scv['pos'])
+      # self.position_saved_count = self.position_saved_count + 1
+      
+      
       self.update_crystals(nObs)
       self.update_collected_crystals()
       print("initial crystal list length")
@@ -601,6 +611,8 @@ class DistributedAgent(base_agent.BaseAgent):
         print(scv['rwalktarg'])
         print("scv rwalk status")
         print(scv['is_active_rwalk'])
+        print("rwalk selection")
+        print(scv['is_selected_rwalk'])
       if(True):
         if(self.numcollected < self.initial_crystal_count):
           for scv in self.scvs:
@@ -665,7 +677,7 @@ class DistributedAgent(base_agent.BaseAgent):
                     scv['is_active_rwalk'] = False
                     scv['is_selected_rwalk'] = False
                     scv['is_active_rwalk'] = False
-                    scv['is_assigned'] = False
+                    scv['scv_assigned'] = False
                     scv['is_active'] = False
                     for assign in self.assignmentlist:
                       if(assign['scv'] == scv['scv_tag']):
